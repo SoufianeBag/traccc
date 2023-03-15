@@ -58,6 +58,21 @@ struct CellsBuffer {
     std::size_t size;
 
     CellsBuffer() : size(0) {}
+
+    void SetSize(std::size_t s, vecmem::memory_resource& mr,
+                 vecmem::cuda::copy& copy) {
+        size = s;
+        channel0    = uint_collection_types::buffer(s, mr);
+        channel1    = uint_collection_types::buffer(s, mr);
+        activation  = scalar_collection_types::buffer(s, mr);
+        time        = scalar_collection_types::buffer(s, mr);
+        module_link = uint_collection_types::buffer(s, mr);
+        copy.setup(channel0);
+        copy.setup(channel1);
+        copy.setup(activation);
+        copy.setup(time);
+        copy.setup(module_link);
+    }
 };
 
 /// Declare all cell collection types
