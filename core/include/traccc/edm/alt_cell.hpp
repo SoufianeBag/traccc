@@ -101,6 +101,25 @@ struct CellsView {
     scalar_collection_types::view time;
     uint_collection_types::view   module_link;
     std::size_t size;
+
+    CellsView() = delete;
+    CellsView(const traccc::CellsBuffer &c) {
+        channel0    = c.channel0;
+        channel1    = c.channel1;
+        activation  = c.activation;
+        time        = c.time;
+        module_link = c.module_link;
+        size = c.size;
+    }
+
+    CellsView(const CellsView &c) {
+        channel0    = c.channel0;
+        channel1    = c.channel1;
+        activation  = c.activation;
+        time        = c.time;
+        module_link = c.module_link;
+        size = c.size;
+    }
 };
 
 /// Declare all cell collection types
