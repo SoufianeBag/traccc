@@ -73,6 +73,20 @@ struct CellsBuffer {
         copy.setup(time);
         copy.setup(module_link);
     }
+
+    void CopyToDevice(const CellsHost &c,
+                      vecmem::cuda::copy& copy) {
+        copy(vecmem::get_data(c.channel0), channel0,
+             vecmem::copy::type::copy_type::host_to_device);
+        copy(vecmem::get_data(c.channel1), channel1,
+             vecmem::copy::type::copy_type::host_to_device);
+        copy(vecmem::get_data(c.activation), activation,
+             vecmem::copy::type::copy_type::host_to_device);
+        copy(vecmem::get_data(c.time), time,
+             vecmem::copy::type::copy_type::host_to_device);
+        copy(vecmem::get_data(c.module_link), module_link,
+             vecmem::copy::type::copy_type::host_to_device);
+    }
 };
 
 /// Declare all cell collection types
