@@ -94,6 +94,15 @@ struct CellsBuffer {
     }
 };
 
+struct CellsView {
+    uint_collection_types::view   channel0;
+    uint_collection_types::view   channel1;
+    scalar_collection_types::view activation;
+    scalar_collection_types::view time;
+    uint_collection_types::view   module_link;
+    std::size_t size;
+};
+
 /// Declare all cell collection types
 using alt_cell_collection_types = collection_types<alt_cell>;
 
