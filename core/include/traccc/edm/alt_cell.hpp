@@ -28,6 +28,15 @@ struct alt_cell {
 using uint_collection_types = collection_types<unsigned int>;
 using scalar_collection_types = collection_types<scalar>;
 
+struct CellsHost {
+    uint_collection_types::host   channel0;
+    uint_collection_types::host   channel1;
+    scalar_collection_types::host activation;
+    scalar_collection_types::host time;
+    uint_collection_types::host   module_link;
+    std::size_t size;
+};
+
 /// Declare all cell collection types
 using alt_cell_collection_types = collection_types<alt_cell>;
 
