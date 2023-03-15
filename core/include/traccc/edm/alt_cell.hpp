@@ -41,12 +41,23 @@ struct CellsHost {
 
     void SetSize(std::size_t s, vecmem::memory_resource *mr) {
         size = s;
-        channel0   = uint_collection_types::host(s, mr);
-        channel1   = uint_collection_types::host(s, mr);
-        activation = scalar_collection_types::host(s, mr);
-        time       = scalar_collection_types::host(s, mr);
-        module_id  = uint_collection_types::host(s, mr);
+        channel0    = uint_collection_types::host(s, mr);
+        channel1    = uint_collection_types::host(s, mr);
+        activation  = scalar_collection_types::host(s, mr);
+        time        = scalar_collection_types::host(s, mr);
+        module_link = uint_collection_types::host(s, mr);
     }
+};
+
+struct CellsBuffer {
+    uint_collection_types::buffer   channel0;
+    uint_collection_types::buffer   channel1;
+    scalar_collection_types::buffer activation;
+    scalar_collection_types::buffer time;
+    uint_collection_types::buffer   module_link;
+    std::size_t size;
+
+    CellsBuffer() : size(0) {}
 };
 
 /// Declare all cell collection types
