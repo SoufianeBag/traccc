@@ -25,6 +25,9 @@ struct alt_cell {
     link_type module_link;
 };
 
+using uint_collection_types = collection_types<unsigned int>;
+using scalar_collection_types = collection_types<scalar>;
+
 /// Declare all cell collection types
 using alt_cell_collection_types = collection_types<alt_cell>;
 
