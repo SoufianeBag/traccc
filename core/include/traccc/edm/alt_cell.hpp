@@ -25,6 +25,7 @@ struct alt_cell {
     link_type module_link;
 };
 
+using scalar = TRACCC_CUSTOM_SCALARTYPE;
 using uint_collection_types = collection_types<unsigned int>;
 using scalar_collection_types = collection_types<scalar>;
 
@@ -35,6 +36,17 @@ struct CellsHost {
     scalar_collection_types::host time;
     uint_collection_types::host   module_link;
     std::size_t size;
+
+    CellsHost() : size(0) {}
+
+    void SetSize(std::size_t s, vecmem::memory_resource *mr) {
+        size = s;
+        channel0   = uint_collection_types::host(s, mr);
+        channel1   = uint_collection_types::host(s, mr);
+        activation = scalar_collection_types::host(s, mr);
+        time       = scalar_collection_types::host(s, mr);
+        module_id  = uint_collection_types::host(s, mr);
+    }
 };
 
 /// Declare all cell collection types
