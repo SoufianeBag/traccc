@@ -74,7 +74,7 @@ class clusterization_algorithm2
                                  vecmem::data::vector_buffer<unsigned int>>(
           const alt_cell_collection_types::const_view&,
           const cell_module_collection_types::const_view&,
-          const traccc::CellsView&)> {
+          const CellsView&)> {
     public:
     /// Constructor for clusterization algorithm
     ///
@@ -97,7 +97,7 @@ class clusterization_algorithm2
     output_type operator()(
         const alt_cell_collection_types::const_view& cells,
         const cell_module_collection_types::const_view& modules,
-        const traccc::CellsView& cellsSoA) const override;
+        const CellsView& cellsSoA) const override;
     private:
     /// The average number of cells in each partition
     unsigned short m_target_cells_per_partition;
