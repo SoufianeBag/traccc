@@ -39,7 +39,7 @@
 #include <iomanip>
 #include <iostream>
 
-
+using namespace traccc ;
 using scalar = TRACCC_CUSTOM_SCALARTYPE;
 using uint_collection_types = traccc::collection_types<unsigned int>;
 using scalar_collection_types = traccc::collection_types<scalar>;
