@@ -27,7 +27,7 @@
 #include <vecmem/utils/cuda/async_copy.hpp>
 #include <vecmem/utils/cuda/copy.hpp>
 
-/
+
 
 using namespace traccc ;
 namespace traccc {
