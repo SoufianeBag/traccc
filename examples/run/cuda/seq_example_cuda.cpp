@@ -40,7 +40,9 @@
 #include <iostream>
 
 
-
+using scalar = TRACCC_CUSTOM_SCALARTYPE;
+using uint_collection_types = collection_types<unsigned int>;
+using scalar_collection_types = collection_types<scalar>;
 
 struct CellsBuffer {
     uint_collection_types::buffer   channel0;
