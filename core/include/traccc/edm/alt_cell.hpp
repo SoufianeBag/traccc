@@ -61,7 +61,7 @@ using alt_cell_collection_types = collection_types<alt_cell>;
 struct alt_cell_reader_output_t {
     alt_cell_collection_types::host cells;
     cell_module_collection_types::host modules;
-    CellsHost cellsSoA
+    CellsHost cellsSoA;
 };
 
 }  // namespace traccc
