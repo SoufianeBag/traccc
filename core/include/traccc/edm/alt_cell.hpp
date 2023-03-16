@@ -10,11 +10,7 @@
 // traccc include(s).
 #include "traccc/edm/cell.hpp"
 #include "traccc/edm/container.hpp"
-// VecMem include(s).
-#include <vecmem/memory/cuda/device_memory_resource.hpp>
-#include <vecmem/memory/cuda/host_memory_resource.hpp>
-#include <vecmem/memory/host_memory_resource.hpp>
-#include <vecmem/utils/cuda/copy.hpp>
+
 
 namespace traccc {
 
@@ -44,83 +40,17 @@ struct CellsHost {
 
     CellsHost() : size(0) {}
 
-    void SetSize(std::size_t s, vecmem::memory_resource *mr) {
+    void SetSize(std::size_t s) {
         size = s;
-        channel0    = uint_collection_types::host(s, mr);
-        channel1    = uint_collection_types::host(s, mr);
-        activation  = scalar_collection_types::host(s, mr);
-        time        = scalar_collection_types::host(s, mr);
-        module_link = uint_collection_types::host(s, mr);
+        channel0    = uint_collection_types::host(s);
+        channel1    = uint_collection_types::host(s);
+        activation  = scalar_collection_types::host(s);
+        time        = scalar_collection_types::host(s);
+        module_link = uint_collection_types::host(s);
     }
 };
 
-struct CellsBuffer {
-    uint_collection_types::buffer   channel0;
-    uint_collection_types::buffer   channel1;
-    scalar_collection_types::buffer activation;
-    scalar_collection_types::buffer time;
-    uint_collection_types::buffer   module_link;
-    std::size_t size;
 
-    CellsBuffer() : size(0) {}
-
-    void SetSize(std::size_t s, vecmem::memory_resource& mr,
-                 vecmem::cuda::copy& copy) {
-        size = s;
-        channel0    = uint_collection_types::buffer(s, mr);
-        channel1    = uint_collection_types::buffer(s, mr);
-        activation  = scalar_collection_types::buffer(s, mr);
-        time        = scalar_collection_types::buffer(s, mr);
-        module_link = uint_collection_types::buffer(s, mr);
-        copy.setup(channel0);
-        copy.setup(channel1);
-        copy.setup(activation);
-        copy.setup(time);
-        copy.setup(module_link);
-    }
-
-    void CopyToDevice(const CellsHost &c,
-                      vecmem::cuda::copy& copy) {
-        copy(vecmem::get_data(c.channel0), channel0,
-             vecmem::copy::type::copy_type::host_to_device);
-        copy(vecmem::get_data(c.channel1), channel1,
-             vecmem::copy::type::copy_type::host_to_device);
-        copy(vecmem::get_data(c.activation), activation,
-             vecmem::copy::type::copy_type::host_to_device);
-        copy(vecmem::get_data(c.time), time,
-             vecmem::copy::type::copy_type::host_to_device);
-        copy(vecmem::get_data(c.module_link), module_link,
-             vecmem::copy::type::copy_type::host_to_device);
-    }
-};
-
-struct CellsView {
-    uint_collection_types::view   channel0;
-    uint_collection_types::view   channel1;
-    scalar_collection_types::view activation;
-    scalar_collection_types::view time;
-    uint_collection_types::view   module_link;
-    std::size_t size;
-
-    CellsView() = delete;
-    CellsView(const traccc::CellsBuffer &c) {
-        channel0    = c.channel0;
-        channel1    = c.channel1;
-        activation  = c.activation;
-        time        = c.time;
-        module_link = c.module_link;
-        size = c.size;
-    }
-
-    CellsView(const CellsView &c) {
-        channel0    = c.channel0;
-        channel1    = c.channel1;
-        activation  = c.activation;
-        time        = c.time;
-        module_link = c.module_link;
-        size = c.size;
-    }
-};
 
 /// Declare all cell collection types
 using alt_cell_collection_types = collection_types<alt_cell>;
