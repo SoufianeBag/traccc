@@ -163,7 +163,7 @@ alt_cell_reader_output_t read_cells_alt(std::string_view filename,
     }
 
     CellsHost cellsSoA;
-    cellsSoA.SetSize(totalCells, mr);
+    cellsSoA.SetSize(totalCells);
     for (int i=0; i < totalCells; ++i) {
         cellsSoA.channel0[i]    = result_cells[i].c.channel0;
         cellsSoA.channel1[i]    = result_cells[i].c.channel1;
