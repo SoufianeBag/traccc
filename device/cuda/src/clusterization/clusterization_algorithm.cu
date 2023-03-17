@@ -401,14 +401,14 @@ __global__ void ccl_kernel2(
     __syncthreads();
     const index_t size = end - start;
     assert(size <= max_cells_per_partition);
-    /*for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
+    for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
         //printf("blck %u th %u ch0 %u\n", blockIdx.x, tid, ch0[tst]);
-        assert(cells_device[tst].c.channel0 == ch0[tst]);
+        assert(cells_device[tst].c.channel0 == cellsSoA_device.channel0[tst]);
         // assert(cells_device[start+cid].c.channel1 ==
         // cells.channel1[start+cid]);
         // assert(cells_device[start+cid].module_link ==
         // cells.module_id[start+cid]);
-    } */
+    } 
     // Check if any work needs to be done
     if (tid >= size) {
         return;
