@@ -37,8 +37,8 @@ inline void aggregate_cluster(
      */
     scalar totalWeight = 0.;
     point2 mean{0., 0.}, var{0., 0.};
-    const auto module_link = module_link[cid + start];
-    const cell_module this_module = modules.at(module_link);
+    const auto mod_link = module_link[cid + start];
+    const cell_module this_module = modules.at(mod_link);
     const unsigned short partition_size = end - start;
 
     channel_id maxChannel1 = std::numeric_limits<channel_id>::min();
@@ -52,7 +52,7 @@ inline void aggregate_cluster(
          * Terminate the process earlier if we have reached a cell sufficiently
          * in a different module.
          */
-        if (module_link[pos] != module_link) {
+        if (module_link[pos] != mod_link) {
             break;
         }
 
@@ -113,7 +113,7 @@ inline void aggregate_cluster(
      */
     out.local = mean;
     out.variance = var;
-    out.module_link = module_link;
+    out.module_link = mod_link;
 }
 
 }  // namespace traccc::device
