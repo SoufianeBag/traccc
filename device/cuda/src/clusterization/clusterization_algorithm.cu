@@ -364,119 +364,40 @@ __global__ void ccl_kernel2(
      * shift both the start and the end of the block forward (to a later point
      * in the array); start and end may be moved different amounts.
      */
-    if (tid == 0) {  /////////////////////////////////////old
-        /*
-         * Initialize shared variables.
-         */
-        /*start = blockIdx.x * target_cells_per_partition;
-        assert(start < num_cells);
-        end = std::min(num_cells, start + target_cells_per_partition);
-        outi = 0; */
-        /*
-         * Next, shift the starting point to a position further in the array;
-         * the purpose of this is to ensure that we are not operating on any
-         * cells that have been claimed by the previous block (if any).
-         */
-        /*while (start != 0 &&
-               cellsSoA_device.module_link[start - 1] ==
-                   cellsSoA_device.module_link[start] &&
-               cellsSoA_device.channel1[start] <=
-                   cellsSoA_device.channel1[start - 1] + 1) {
-            ++start;
-        }*/
-
-        /*
-         * Then, claim as many cells as we need past the naive end of the
-         * current block to ensure that we do not end our partition on a cell
-         * that is not a possible boundary!
-         */
-        /*while (end < num_cells &&
-               cellsSoA_device.module_link[end - 1] ==
-                   cellsSoA_device.module_link[end] &&
-               cellsSoA_device.channel1[end] <=
-                   cellsSoA_device.channel1[end - 1] + 1) {
-            ++end;
-        }
-    } */ ///////////////////////////////////////////////////////old
- 
     if (tid == 0) {
         /*
          * Initialize shared variables.
          */
-        //start = blockIdx.x * target_cells_per_partition;
-        if (blockIdx.x == 0) {
-            start = 0;
-        }
-        else {
-            start = num_cells-1;
-        }
+        start = blockIdx.x * target_cells_per_partition;
         assert(start < num_cells);
-        end = std::min(num_cells, (blockIdx.x+1) * target_cells_per_partition);
-        //end2 = std::min(num_cells, start + target_cells_per_partition);
+        end = std::min(num_cells, start + target_cells_per_partition);
         outi = 0;
         /*
          * Next, shift the starting point to a position further in the array;
          * the purpose of this is to ensure that we are not operating on any
          * cells that have been claimed by the previous block (if any).
          */
-        /*while (start != 0 &&
-               cells_device[start - 1].module_link ==
-                   cells_device[start].module_link &&
-               cells_device[start].c.channel1 <=
-                   cells_device[start - 1].c.channel1 + 1) {
+        while (start != 0 &&
+               cellsSoA_device.module_link[start - 1] ==
+                   cellsSoA_device.module_link[start] &&
+               cellsSoA_device.channel1[start] <=
+                   cellsSoA_device.channel1[start - 1] + 1) {
             ++start;
-        }*/
+        }
+
         /*
          * Then, claim as many cells as we need past the naive end of the
          * current block to ensure that we do not end our partition on a cell
          * that is not a possible boundary!
          */
         while (end < num_cells &&
-               cells_device[end - 1].module_link ==
-                   cells_device[end].module_link &&
-               cells_device[end].c.channel1 <=
-                   cells_device[end - 1].c.channel1 + 1) {
+               cellsSoA_device.module_link[end - 1] ==
+                   cellsSoA_device.module_link[end] &&
+               cellsSoA_device.channel1[end] <=
+                   cellsSoA_device.channel1[end - 1] + 1) {
             ++end;
         }
     }
-    __syncthreads();
-    if (blockIdx.x != 0)
-    for (unsigned int cid = target_cells_per_partition * blockIdx.x + tid;
-         cid < end; cid += blckDim) {
-        if ((cells_device[cid-1].module_link !=
-                cells_device[cid].module_link) ||
-            (cells_device[cid-1].c.channel1+1 <
-                cells_device[cid].c.channel1)) {
-            atomicMin(&start, cid);
-            break;
-        }
-    }
-    __syncthreads();
-    /*for (unsigned int cid = end2 + tid;
-         cid < num_cells; cid += blckDim) {
-        if (cells_device[cid-1].module_link !=
-                   cells_device[cid].module_link ||
-               cells_device[cid-1].c.channel1+1 <
-                   cells_device[cid].c.channel1) {
-            atomicMin(&end2, cid);
-            break;
-        }
-    }
-    __syncthreads();*/
-
-    /*if (start != start2) {
-        printf("th %u start %u start2 %u\n",
-            target_cells_per_partition * blockIdx.x + tid,
-            start, start2);
-    }
-​
-    if (end != end2) {
-        printf("th %u end %u end2 %u\n",
-            target_cells_per_partition * blockIdx.x + tid,
-            end, end2);
-    }*/
-
-    ////////////////////////////////
     __syncthreads();
     const index_t size = end - start;
     //printf("size %hu \n", size);
@@ -597,7 +518,7 @@ __global__ void ccl_kernel2(
                 measurements_device[groupPos + id], cell_links, groupPos + id); 
         }
     }
-
+}
 
 __global__ void form_spacepoints(
     alt_measurement_collection_types::const_view measurements_view,
