@@ -134,7 +134,6 @@ inline void aggregate_cluster2(
      */
     scalar totalWeight = 0.;
     point2 mean{0., 0.}, var{0., 0.};
-    const unsigned int chch = ch0[cid + start];
     const unsigned int mod_link = module_link[cid + start];
     const cell_module this_module = modules.at(mod_link);
     const unsigned short partition_size = end - start;
