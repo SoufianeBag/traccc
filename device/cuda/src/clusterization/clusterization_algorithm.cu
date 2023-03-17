@@ -490,6 +490,7 @@ __global__ void ccl_kernel2(
      */
     if (tid == 0) {
         outi = atomicAdd(&measurement_count, outi);
+        printf("outi %u \n", outi);
     }
     __syncthreads();
     /*
