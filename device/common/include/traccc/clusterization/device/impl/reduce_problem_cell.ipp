@@ -92,9 +92,7 @@ bool is_adjacent2(channel_id ac0, channel_id ac1, channel_id bc0,
 
 TRACCC_HOST_DEVICE
 inline void reduce_problem_cell2(
-    vecmem::device_vector<unsigned int> ch0,
-    vecmem::device_vector<unsigned int> ch1,
-    vecmem::device_vector<unsigned int> module_link,
+    const CellsRefDevice cellsSoA_device;
     const unsigned short cid, const unsigned int start, const unsigned int end,
     unsigned char& adjc, unsigned short adjv[8]) {
 
@@ -102,9 +100,9 @@ inline void reduce_problem_cell2(
 
     // Check if this code can benefit from changing to structs of arrays, as the
     // recurring accesses to cell data in global memory is slow right now.
-    const channel_id c0 = ch0[pos];
-    const channel_id c1 = ch1[pos];
-    const unsigned int mod_id = module_link[pos];
+    const channel_id c0 = cellsSoA_device.channel0[pos];
+    const channel_id c1 = cellsSoA_device.channel1[pos];
+    const unsigned int mod_id = cellsSoA_device.module_link[pos];
 
     /*
      * First, we traverse the cells backwards, starting from the current
@@ -118,7 +116,7 @@ inline void reduce_problem_cell2(
          * impossible for that cell to ever be adjacent to this one.
          * This is a small optimisation.
          */
-        if (ch1[j] + 1 < c1 || module_link[j] != mod_id) {
+        if (cellsSoA_device.channel1[j] + 1 < c1 || cellsSoA_device.module_link[j] != mod_id) {
             break;
         }
 
@@ -126,7 +124,7 @@ inline void reduce_problem_cell2(
          * If the cell examined is adjacent to the current cell, save it
          * in the current cell's adjacency set.
          */
-        if (is_adjacent2(c0, c1, ch0[j], ch1[j])) {
+        if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
             adjv[adjc++] = j - start;
         }
     }
@@ -140,11 +138,11 @@ inline void reduce_problem_cell2(
          * Note that this check now looks in the opposite direction! An
          * important difference.
          */
-        if (ch1[j] > c1 + 1 || module_link[j] != mod_id) {
+        if (cellsSoA_device.channel1[j] > c1 + 1 || cellsSoA_device.module_link[j] != mod_id) {
             break;
         }
 
-        if (is_adjacent2(c0, c1, ch0[j], ch1[j])) {
+        if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
             adjv[adjc++] = j - start;
         }
     }

@@ -345,10 +345,12 @@ __global__ void ccl_kernel2(
     const index_t blckDim = blockDim.x;
     const alt_cell_collection_types::const_device cells_device(cells_view);
     // const CellsRefDevice cells(cellsSoA);
-    vecmem::device_vector<unsigned int> ch0(cellsSoA.channel0);
-    vecmem::device_vector<unsigned int> ch1(cellsSoA.channel1);
-    vecmem::device_vector<scalar> activation(cellsSoA.activation);
-    vecmem::device_vector<unsigned int> module_link(cellsSoA.module_link);
+    //vecmem::device_vector<unsigned int> ch0(cellsSoA.channel0);
+    //vecmem::device_vector<unsigned int> ch1(cellsSoA.channel1);
+    //vecmem::device_vector<scalar> activation(cellsSoA.activation);
+    //vecmem::device_vector<unsigned int> module_link(cellsSoA.module_link);
+
+    const traccc::CellsRefDevice cellsSoA_device(cellsSoA);
     const unsigned int num_cells = cells_device.size();
     __shared__ unsigned int start, end;
     /*
@@ -376,8 +378,8 @@ __global__ void ccl_kernel2(
          * cells that have been claimed by the previous block (if any).
          */
         while (start != 0 &&
-               module_link[start - 1] ==
-                   module_link[start] &&
+               cellsSoA_device.module_link[start - 1] ==
+                   cellsSoA_device.module_link[start] &&
                ch1[start] <=
                    ch1[start - 1] + 1) {
             ++start;
@@ -389,8 +391,8 @@ __global__ void ccl_kernel2(
          * that is not a possible boundary!
          */
         while (end < num_cells &&
-               module_link[end - 1] ==
-                   module_link[end] &&
+               cellsSoA_device.module_link[end - 1] ==
+                   cellsSoA_device.module_link[end] &&
                ch1[end] <=
                    ch1[end - 1] + 1) {
             ++end;
@@ -433,7 +435,7 @@ __global__ void ccl_kernel2(
         /*
          * Look for adjacent cells to the current one.
          */
-        device::reduce_problem_cell2(ch0 ,ch1, module_link, cid, start, end, adjc[tst],
+        device::reduce_problem_cell2(cellsSoA_device, cid, start, end, adjc[tst],
                                     adjv[tst]);
     }
     /*
@@ -507,9 +509,9 @@ __global__ void ccl_kernel2(
              * output array which we can write to.
              */
             const unsigned int id = atomicAdd(&outi, 1);
-            /*device::aggregate_cluster2(
-                ch0 ,ch1, activation , module_link, modules_device, f_view, start, end, cid,
-                measurements_device[groupPos + id], cell_links, groupPos + id); */
+            device::aggregate_cluster2(
+                cellsSoA_device, modules_device, f_view, start, end, cid,
+                measurements_device[groupPos + id], cell_links, groupPos + id); 
         }
     }
 }

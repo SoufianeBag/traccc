@@ -113,10 +113,7 @@ inline void aggregate_cluster(
 
 TRACCC_HOST_DEVICE
 inline void aggregate_cluster2(
-     vecmem::data::vector_view<unsigned int> ch0 ,
-     vecmem::data::vector_view<unsigned int> ch1, 
-     vecmem::data::vector_view<scalar> activation ,
-     vecmem::data::vector_view<unsigned int> module_link ,
+     const CellsRefDevice cellsSoA_device;
     const cell_module_collection_types::const_device& modules,
     const vecmem::data::vector_view<unsigned short> f_view,
     const unsigned int start, const unsigned int end, const unsigned short cid,
@@ -134,7 +131,7 @@ inline void aggregate_cluster2(
      */
     scalar totalWeight = 0.;
     point2 mean{0., 0.}, var{0., 0.};
-    const unsigned int mod_link = module_link[cid + start];
+    const unsigned int mod_link = cellsSoA_device.module_link[cid + start];
     const cell_module this_module = modules.at(mod_link);
     const unsigned short partition_size = end - start;
 
@@ -149,13 +146,13 @@ inline void aggregate_cluster2(
          * Terminate the process earlier if we have reached a cell sufficiently
          * in a different module.
          */
-        if (module_link[pos] != mod_link) {
+        if (cellsSoA_device.module_link[pos] != mod_link) {
             break;
         }
 
-        const unsigned int this_cell_ch0  = ch0[pos];
-        const unsigned int this_cell_ch1  = ch1[pos];
-        const unsigned int this_cell_activation  = activation[pos];
+        const unsigned int this_cell_ch0  = cellsSoA_device.channel0[pos];
+        const unsigned int this_cell_ch1  = cellsSoA_device.channel1[pos];
+        const unsigned int this_cell_activation  = cellsSoA_device.activation[pos];
 
         /*
          * If the value of this cell is equal to our, that means it

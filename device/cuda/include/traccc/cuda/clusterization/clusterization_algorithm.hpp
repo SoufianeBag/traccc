@@ -101,7 +101,21 @@ struct CellsView {
         size = c.size;
     }
 };
-
+struct CellsRefDevice {
+    uint_collection_types::device   channel0;
+    uint_collection_types::device   channel1;
+    scalar_collection_types::device activation;
+    scalar_collection_types::device time;
+    uint_collection_types::device   module_link;
+    CellsRefDevice() = delete;
+TRACCC_DEVICE
+    CellsRefDevice(const traccc::CellsView &c)
+    : channel0{c.channel0},
+      channel1(c.channel1),
+      activation(c.activation),
+      time(c.time),
+      module_link(c.module_link) {}
+};
 }
 namespace traccc::cuda {
 
