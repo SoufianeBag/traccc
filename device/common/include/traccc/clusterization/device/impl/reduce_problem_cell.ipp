@@ -126,7 +126,7 @@ inline void reduce_problem_cell2(
          */
         if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
             adjv[adjc++] = j - start;
-            printf("cellsSoA_device.channel0[j] %u \n", cellsSoA_device.channel0[j]);
+            printf("cellsSoA_device.module_link[j]  %u \n", cellsSoA_device.module_link[j]);
         }
     }
 
