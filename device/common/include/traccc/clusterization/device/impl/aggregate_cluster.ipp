@@ -152,8 +152,8 @@ inline void aggregate_cluster2(
 
         const unsigned int this_cell_ch0  = cellsSoA_device.channel0[pos];
         const unsigned int this_cell_ch1  = cellsSoA_device.channel1[pos];
-        const unsigned int this_cell_activation  = cellsSoA_device.activation[pos];
-        printf(" this_cell_activation %f  cellsSoA_device.activation[pos] %f \n " , this_cell_activation , cellsSoA_device.activation[pos] );
+        const scalar this_cell_activation  = cellsSoA_device.activation[pos];
+        
         /*
          * If the value of this cell is equal to our, that means it
          * is part of our cluster. In that case, we take its values
