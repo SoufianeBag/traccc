@@ -597,7 +597,7 @@ __global__ void ccl_kernel2(
                 measurements_device[groupPos + id], cell_links, groupPos + id); 
         }
     }
-}
+
 
 __global__ void form_spacepoints(
     alt_measurement_collection_types::const_view measurements_view,
