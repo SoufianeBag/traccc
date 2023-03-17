@@ -92,7 +92,7 @@ bool is_adjacent2(channel_id ac0, channel_id ac1, channel_id bc0,
 
 TRACCC_HOST_DEVICE
 inline void reduce_problem_cell2(
-    const CellsRefDevice cellsSoA_device;
+    const CellsRefDevice cellsSoA_device,
     const unsigned short cid, const unsigned int start, const unsigned int end,
     unsigned char& adjc, unsigned short adjv[8]) {
 
