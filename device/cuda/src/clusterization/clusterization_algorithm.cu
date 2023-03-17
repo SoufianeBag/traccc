@@ -380,8 +380,8 @@ __global__ void ccl_kernel2(
         while (start != 0 &&
                cellsSoA_device.module_link[start - 1] ==
                    cellsSoA_device.module_link[start] &&
-               ch1[start] <=
-                   ch1[start - 1] + 1) {
+               cellsSoA_device.channel1[start] <=
+                   cellsSoA_device.channel1[start - 1] + 1) {
             ++start;
         }
 
@@ -393,8 +393,8 @@ __global__ void ccl_kernel2(
         while (end < num_cells &&
                cellsSoA_device.module_link[end - 1] ==
                    cellsSoA_device.module_link[end] &&
-               ch1[end] <=
-                   ch1[end - 1] + 1) {
+               cellsSoA_device.channel1[end] <=
+                   cellsSoA_device.channel1[end - 1] + 1) {
             ++end;
         }
     }
