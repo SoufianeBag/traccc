@@ -408,6 +408,7 @@ __global__ void ccl_kernel2(
         assert(cells_device[tst].c.channel1 == cellsSoA_device.channel1[tst]);
         assert(cells_device[tst].c.activation == cellsSoA_device.activation[tst]);
         assert(cells_device[tst].c.module_link == cellsSoA_device.module_link[tst]);
+        printf("cellsSoA_device.activation[tst] %lf \n" , cellsSoA_device.activation[tst]);
     } 
     // Check if any work needs to be done
     if (tid >= size) {
