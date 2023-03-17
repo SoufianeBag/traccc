@@ -437,6 +437,7 @@ __global__ void ccl_kernel2(
          */
         device::reduce_problem_cell2(cellsSoA_device, cid, start, end, adjc[tst],
                                     adjv[tst]);
+        
     }
     /*
      * These arrays are the meat of the pudding of this algorithm, and we
@@ -478,6 +479,7 @@ __global__ void ccl_kernel2(
         if (f[cid] == cid) {
             atomicAdd(&outi, 1);
         }
+        printf("f[cid] %u \n ", f[cid] );
     }
     __syncthreads();
     /*
@@ -490,7 +492,7 @@ __global__ void ccl_kernel2(
      */
     if (tid == 0) {
         outi = atomicAdd(&measurement_count, outi);
-        printf("outi %u \n", outi);
+        //printf("outi %u \n", outi);
     }
     __syncthreads();
     /*
