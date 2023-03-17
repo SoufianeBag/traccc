@@ -208,6 +208,7 @@ inline void aggregate_cluster2(
     out.local = mean;
     out.variance = var;
     out.module_link = mod_link;
+    printf(" main[0] %u , main[1] %u \n " , main[0] ,  main[1] );
 }
 
 }  // namespace traccc::device
