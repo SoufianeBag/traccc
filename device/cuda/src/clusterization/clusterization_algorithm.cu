@@ -340,6 +340,7 @@ __global__ void ccl_kernel2(
     alt_measurement_collection_types::view measurements_view,
     unsigned int& measurement_count,
     vecmem::data::vector_view<unsigned int> cell_links) {
+
     const index_t tid = threadIdx.x;
     const index_t blckDim = blockDim.x;
     const alt_cell_collection_types::const_device cells_device(cells_view);
@@ -506,9 +507,9 @@ __global__ void ccl_kernel2(
              * output array which we can write to.
              */
             const unsigned int id = atomicAdd(&outi, 1);
-            device::aggregate_cluster2(
+            /*device::aggregate_cluster2(
                 ch0 ,ch1, activation , module_link, modules_device, f_view, start, end, cid,
-                measurements_device[groupPos + id], cell_links, groupPos + id);
+                measurements_device[groupPos + id], cell_links, groupPos + id); */
         }
     }
 }
