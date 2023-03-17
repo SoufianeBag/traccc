@@ -237,7 +237,7 @@ __global__ void ccl_kernel(
         /*
          * Look for adjacent cells to the current one.
          */
-        device::reduce_problem_cell(cells_device, cid, start, end, adjc[tst],
+        device::reduce_problem_cell2(cells_device, cid, start, end, adjc[tst],
                                     adjv[tst]);
     }
 

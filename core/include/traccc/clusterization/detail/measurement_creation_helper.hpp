@@ -24,7 +24,7 @@ inline scalar signal_cell_modelling(scalar signal_in,
 }
 
 /// Function for pixel segmentation
-TRACCC_HOST
+TRACCC_HOST_DEVICE
 inline vector2 position_from_cell(const cell& c, const cell_module& module) {
     // Retrieve the specific values based on module idx
     return {module.pixel.min_center_x + c.channel0 * module.pixel.pitch_x,
@@ -32,7 +32,7 @@ inline vector2 position_from_cell(const cell& c, const cell_module& module) {
 }
 
 TRACCC_DEVICE
-inline vector2 position_from_cell(const unsigned int channel0, const unsigned int channel1,  const cell_module& module) {
+inline vector2 position_from_cell2(const unsigned int channel0, const unsigned int channel1,  const cell_module& module) {
     // Retrieve the specific values based on module idx
     return {module.pixel.min_center_x + channel0 * module.pixel.pitch_x,
             module.pixel.min_center_y + channel1 * module.pixel.pitch_y};
