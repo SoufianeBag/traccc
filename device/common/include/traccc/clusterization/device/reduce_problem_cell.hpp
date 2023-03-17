@@ -29,7 +29,9 @@ namespace traccc::device {
 ///
 TRACCC_HOST_DEVICE
 inline void reduce_problem_cell(
-    const alt_cell_collection_types::const_device& cells,
+    vecmem::device_vector<unsigned int> ch0,
+    vecmem::device_vector<unsigned int> ch1,
+    vecmem::device_vector<unsigned int> module_link,
     const unsigned short cid, const unsigned int start, const unsigned int end,
     unsigned char& adjc, unsigned short adjv[8]);
 

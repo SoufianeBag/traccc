@@ -16,7 +16,10 @@ namespace traccc::device {
 
 TRACCC_HOST_DEVICE
 inline void aggregate_cluster(
-    const alt_cell_collection_types::const_device& cells,
+     vecmem::data::vector_view<unsigned short> ch0 ,
+     vecmem::data::vector_view<unsigned short> ch1, 
+     vecmem::data::vector_view<scalar> activation ,
+     vecmem::data::vector_view<unsigned short> module_link ,
     const cell_module_collection_types::const_device& modules,
     const vecmem::data::vector_view<unsigned short> f_view,
     const unsigned int start, const unsigned int end, const unsigned short cid,
@@ -34,7 +37,7 @@ inline void aggregate_cluster(
      */
     scalar totalWeight = 0.;
     point2 mean{0., 0.}, var{0., 0.};
-    const auto module_link = cells[cid + start].module_link;
+    const auto module_link = module_link[cid + start];
     const cell_module this_module = modules.at(module_link);
     const unsigned short partition_size = end - start;
 
@@ -49,11 +52,13 @@ inline void aggregate_cluster(
          * Terminate the process earlier if we have reached a cell sufficiently
          * in a different module.
          */
-        if (cells[pos].module_link != module_link) {
+        if (module_link[pos] != module_link) {
             break;
         }
 
-        const cell this_cell = cells[pos].c;
+        const unsigned int this_cell_ch0  = ch0[pos];
+        const unsigned int this_cell_ch1  = ch1[pos];
+        const unsigned int this_cell_activation  = activation[pos];
 
         /*
          * If the value of this cell is equal to our, that means it
@@ -62,17 +67,17 @@ inline void aggregate_cluster(
          */
         if (f[j] == cid) {
 
-            if (this_cell.channel1 > maxChannel1) {
-                maxChannel1 = this_cell.channel1;
+            if (this_cell_ch1 > maxChannel1) {
+                maxChannel1 = this_cell_ch1;
             }
 
             const float weight = traccc::detail::signal_cell_modelling(
-                this_cell.activation, this_module);
+                this_cell_activation, this_module);
 
             if (weight > this_module.threshold) {
-                totalWeight += this_cell.activation;
+                totalWeight += this_cell_activation;
                 const point2 cell_position =
-                    traccc::detail::position_from_cell(this_cell, this_module);
+                    traccc::detail::position_from_cell(this_cell_ch0 , this_cell_ch1, this_module);
                 const point2 prev = mean;
                 const point2 diff = cell_position - prev;
 
@@ -90,7 +95,7 @@ inline void aggregate_cluster(
          * Terminate the process earlier if we have reached a cell sufficiently
          * far away from the cluster in the dominant axis.
          */
-        if (this_cell.channel1 > maxChannel1 + 1) {
+        if (this_cell_ch1 > maxChannel1 + 1) {
             break;
         }
     }

@@ -345,6 +345,9 @@ __global__ void ccl_kernel2(
     const alt_cell_collection_types::const_device cells_device(cells_view);
     // const CellsRefDevice cells(cellsSoA);
     vecmem::device_vector<unsigned int> ch0(cellsSoA.channel0);
+    vecmem::device_vector<unsigned int> ch1(cellsSoA.channel1);
+    vecmem::device_vector<scalar> activation(cellsSoA.activation);
+    vecmem::device_vector<unsigned int> module_link(cellsSoA.module_link);
     const unsigned int num_cells = cells_device.size();
     __shared__ unsigned int start, end;
     /*
@@ -372,36 +375,37 @@ __global__ void ccl_kernel2(
          * cells that have been claimed by the previous block (if any).
          */
         while (start != 0 &&
-               cells_device[start - 1].module_link ==
-                   cells_device[start].module_link &&
-               cells_device[start].c.channel1 <=
-                   cells_device[start - 1].c.channel1 + 1) {
+               module_link[start - 1] ==
+                   module_link[start] &&
+               ch1[start] <=
+                   ch1[start - 1] + 1) {
             ++start;
         }
+
         /*
          * Then, claim as many cells as we need past the naive end of the
          * current block to ensure that we do not end our partition on a cell
          * that is not a possible boundary!
          */
         while (end < num_cells &&
-               cells_device[end - 1].module_link ==
-                   cells_device[end].module_link &&
-               cells_device[end].c.channel1 <=
-                   cells_device[end - 1].c.channel1 + 1) {
+               module_link[end - 1] ==
+                   module_link[end] &&
+               ch1[end] <=
+                   ch1[end - 1] + 1) {
             ++end;
         }
     }
     __syncthreads();
     const index_t size = end - start;
     assert(size <= max_cells_per_partition);
-    for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
+    /*for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
         //printf("blck %u th %u ch0 %u\n", blockIdx.x, tid, ch0[tst]);
         assert(cells_device[tst].c.channel0 == ch0[tst]);
         // assert(cells_device[start+cid].c.channel1 ==
         // cells.channel1[start+cid]);
         // assert(cells_device[start+cid].module_link ==
         // cells.module_id[start+cid]);
-    }
+    } */
     // Check if any work needs to be done
     if (tid >= size) {
         return;
@@ -428,7 +432,7 @@ __global__ void ccl_kernel2(
         /*
          * Look for adjacent cells to the current one.
          */
-        device::reduce_problem_cell(cells_device, cid, start, end, adjc[tst],
+        device::reduce_problem_cell(ch0 ,ch1, module_link, cid, start, end, adjc[tst],
                                     adjv[tst]);
     }
     /*
@@ -503,7 +507,7 @@ __global__ void ccl_kernel2(
              */
             const unsigned int id = atomicAdd(&outi, 1);
             device::aggregate_cluster(
-                cells_device, modules_device, f_view, start, end, cid,
+                ch0 ,ch1, activation , module_link, modules_device, f_view, start, end, cid,
                 measurements_device[groupPos + id], cell_links, groupPos + id);
         }
     }
