@@ -167,7 +167,7 @@ inline void aggregate_cluster2(
 
             const float weight = traccc::detail::signal_cell_modelling(
                 this_cell_activation, this_module);
-
+            printf("weight %u \n" , weight);
             if (weight > this_module.threshold) {
                 totalWeight += this_cell_activation;
                 const point2 cell_position =
@@ -208,7 +208,7 @@ inline void aggregate_cluster2(
     out.local = mean;
     out.variance = var;
     out.module_link = mod_link;
-    printf(" mean[0] %u , mean[1] %u \n " , mean[0] ,  mean[1] );
+    //printf(" mean[0] %u , mean[1] %u \n " , mean[0] ,  mean[1] );
 }
 
 }  // namespace traccc::device
