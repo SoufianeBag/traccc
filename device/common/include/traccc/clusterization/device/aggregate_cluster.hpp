@@ -39,7 +39,7 @@ inline void aggregate_cluster(
     const unsigned int link);
 
 
-TRACCC_HOST_DEVICE
+TRACCC_DEVICE
 inline void aggregate_cluster2(
     const CellsRefDevice& cellsSoA_device,
     const cell_module_collection_types::const_device& modules,
