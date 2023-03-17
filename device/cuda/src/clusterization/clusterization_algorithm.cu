@@ -479,7 +479,7 @@ __global__ void ccl_kernel2(
         if (f[cid] == cid) {
             atomicAdd(&outi, 1);
         }
-        printf("f[cid] %u \n ", f[cid] );
+        //printf("f[cid] %u \n ", f[cid] );
     }
     __syncthreads();
     /*
