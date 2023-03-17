@@ -164,10 +164,10 @@ inline void aggregate_cluster2(
             if (this_cell_ch1 > maxChannel1) {
                 maxChannel1 = this_cell_ch1;
             }
-
+            printf("this_cell_activation %u \n" , this_cell_activation);
             const float weight = traccc::detail::signal_cell_modelling(
                 this_cell_activation, this_module);
-            printf("weight %u \n" , weight);
+            //printf("weight %u \n" , weight);
             if (weight > this_module.threshold) {
                 totalWeight += this_cell_activation;
                 const point2 cell_position =
