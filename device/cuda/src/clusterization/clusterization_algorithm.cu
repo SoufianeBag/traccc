@@ -58,7 +58,6 @@ __device__ int warpReduceMin(int val)
 {
     for (int offset = warpSize / 2; offset > 0; offset /= 2) {
         val = min(val, __shfl_down_sync(0xffffffff, val, offset));
-        printf("val %u \n", val );
        // __syncwarp();
     }
     return val;
@@ -509,6 +508,7 @@ __global__ void ccl_kernel2(
         // find minimum value in the warp  
         __syncthreads();        
         int warp_min = warpReduceMin(cell);
+        printf("warp_min %u \n", warp_min );
         __syncthreads();  
         // thread with lane id 0 writes the result 
         if (tid % WARP_SIZE == 0 && warp_min != 999 ) {
