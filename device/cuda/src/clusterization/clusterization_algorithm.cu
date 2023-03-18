@@ -499,8 +499,6 @@ __global__ void ccl_kernel2(
    __shared__ short flag[2];  
    unsigned int short cell = 9999; 
    
-
-
       
     for (index_t iter = 0; iter < 8; ++iter) {
          
@@ -530,8 +528,7 @@ __global__ void ccl_kernel2(
                 }
         __syncthreads();
         if (flag[0] == 1 ) break;
-                   
-        
+ 
         
     }
    }
