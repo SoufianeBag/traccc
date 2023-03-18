@@ -518,7 +518,7 @@ __global__ void ccl_kernel2(
              __syncthreads();
             if (tid == 0 && flag[0] == 1 ) {
                 start = std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3] })  + start ;
-                printf("start %u \n" , start);
+                printf("start %u blockIdx.x %u \n" , start , blockIdx.x);
                 break;
                 }
         
