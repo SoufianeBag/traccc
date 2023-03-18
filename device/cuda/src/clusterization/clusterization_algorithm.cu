@@ -529,7 +529,7 @@ __global__ void ccl_kernel2(
         
         
     }
-    printf("hello \n ");
+    
 
     /*cell = 999;
     #pragma unroll  
@@ -565,7 +565,7 @@ __global__ void ccl_kernel2(
 
     __syncthreads();
     const index_t size = end - start;
-   //printf("size %hu \n", size);
+   printf("size %hu \n", size);
     assert(size <= max_cells_per_partition);
     /*for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
         //printf("blck %u th %u ch0 %u\n", blockIdx.x, tid, ch0[tst]);
