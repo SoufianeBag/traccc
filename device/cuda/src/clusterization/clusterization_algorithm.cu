@@ -521,7 +521,7 @@ __global__ void ccl_kernel2(
              __syncthreads();
             if (tid == 0 ) {
                 start = std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3] }) + start;
-                printf("start %u", start);
+                printf("start %u \n", start);
                 flag[0] = 1 ; 
                 }
         
@@ -553,7 +553,7 @@ __global__ void ccl_kernel2(
             __syncthreads();
             if (tid == 0 ) {
                 end = std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3]} ) + end ;
-                printf("end %u", end);
+                //printf("end %u \n", end);
                 flag[0] = 1 ; 
                 }
         
@@ -565,7 +565,7 @@ __global__ void ccl_kernel2(
 
     __syncthreads();
     const index_t size = end - start;
-    printf("size %hu \n", size);
+   // printf("size %hu \n", size);
     assert(size <= max_cells_per_partition);
     /*for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
         //printf("blck %u th %u ch0 %u\n", blockIdx.x, tid, ch0[tst]);
