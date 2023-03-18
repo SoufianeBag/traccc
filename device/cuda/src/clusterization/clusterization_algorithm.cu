@@ -53,9 +53,9 @@ namespace kernels {
 /// @param[in] adjv     Vector of adjacent cells
 /// @param[in] tid      The thread index
 ///
-__device__ void fast_sv_1(index_t* f, index_t* gf,
+__device__ void fast_sv_1(index_t* f, 
                           unsigned char adjc[MAX_CELLS_PER_THREAD],
-                          index_t adjv[MAX_CELLS_PER_THREAD][8], index_t tid,
+                          index_t adjv[MAX_CELLS_PER_THREAD][9], index_t tid,
                           const index_t blckDim) {
     /*
      * The algorithm finishes if an iteration leaves the arrays unchanged.
@@ -64,12 +64,12 @@ __device__ void fast_sv_1(index_t* f, index_t* gf,
      */
     bool gf_changed;
 
-    do {
+    //do {
         /*
          * Reset the end-parameter to false, so we can set it to true if we
          * make a change to the gf array.
          */
-        gf_changed = false;
+        //gf_changed = false;
 
         /*
          * The algorithm executes in a loop of three distinct parallel
@@ -78,7 +78,7 @@ __device__ void fast_sv_1(index_t* f, index_t* gf,
          * cluster ID if it is lower than ours, essentially merging the two
          * together.
          */
-        for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
+        /*for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
             const index_t cid = tst * blckDim + tid;
 
             __builtin_assume(adjc[tst] <= 8);
@@ -90,44 +90,44 @@ __device__ void fast_sv_1(index_t* f, index_t* gf,
                     f[cid] = q;
                 }
             }
-        }
+        }*/
 
         /*
          * Each stage in this algorithm must be preceded by a
          * synchronization barrier!
          */
-        __syncthreads();
+        //__syncthreads();
 
-#pragma unroll
+/*#pragma unroll
         for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
-            const index_t cid = tst * blckDim + tid;
+            const index_t cid = tst * blckDim + tid; */
             /*
              * The second stage is shortcutting, which is an optimisation that
              * allows us to look at any shortcuts in the cluster IDs that we
              * can merge without adjacency information.
              */
-            if (f[cid] > gf[cid]) {
+           /* if (f[cid] > gf[cid]) {
                 f[cid] = gf[cid];
             }
-        }
+        }*/
 
         /*
          * Synchronize before the final stage.
          */
-        __syncthreads();
+        //__syncthreads();
 
-#pragma unroll
-        for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
-            const index_t cid = tst * blckDim + tid;
+//#pragma unroll
+        /*for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
+            const index_t cid = tst * blckDim + tid; */
             /*
              * Update the array for the next generation, keeping track of any
              * changes we make.
              */
-            if (gf[cid] != f[f[cid]]) {
+            /*if (gf[cid] != f[f[cid]]) {
                 gf[cid] = f[f[cid]];
                 gf_changed = true;
             }
-        }
+        }*/
 
         /*
          * To determine whether we need another iteration, we use block
@@ -136,7 +136,31 @@ __device__ void fast_sv_1(index_t* f, index_t* gf,
          * will return a true value and go to the next iteration. Only if
          * all threads return false will the loop exit.
          */
-    } while (__syncthreads_or(gf_changed));
+    //} while (__syncthreads_or(gf_changed));
+
+    //// new CC : help us to reduce shared memory usage
+    do {
+        
+      
+        gf_changed = false;
+        #pragma unroll
+        for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
+            const index_t cid = tst * blckDim + tid;
+            
+            
+                #pragma unroll
+                for (index_t i = 0; i < adjc[tst]; ++i){    // neighbors communication
+                if (f[cid] > f[adjv[tst][i]])
+                {
+                    f[cid] = f[adjv[tst][i]];
+                    gf_changed = true;
+                }
+                
+                }
+            }
+            
+       } while (__syncthreads_or(gf_changed));
+  
 }
 
 __global__ void ccl_kernel(
@@ -499,7 +523,7 @@ __global__ void ccl_kernel2(
     alt_measurement_collection_types::device measurements_device(
         measurements_view);
     // Vector of indices of the adjacent cells
-    index_t adjv[MAX_CELLS_PER_THREAD][8];
+    index_t adjv[MAX_CELLS_PER_THREAD][9];
     /*
      * The number of adjacent cells for each cell must start at zero, to
      * avoid uninitialized memory. adjv does not need to be zeroed, as
@@ -511,6 +535,7 @@ __global__ void ccl_kernel2(
 #pragma unroll
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         adjc[tst] = 0;
+        adjv[tst][8] = cid ;
     }
 #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
@@ -531,7 +556,8 @@ __global__ void ccl_kernel2(
      */
     extern __shared__ index_t shared_v[];
     index_t* f = &shared_v[0];
-    index_t* f_next = &shared_v[max_cells_per_partition];
+    
+
 #pragma unroll
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         const index_t cid = tst * blckDim + tid;
@@ -539,8 +565,8 @@ __global__ void ccl_kernel2(
          * At the start, the values of f and f_next should be equal to the
          * ID of the cell.
          */
-        f[cid] = cid;
-        f_next[cid] = cid;
+        f[cid] =  adjv[tst][8];
+        
     }
     /*
      * Now that the data has initialized, we synchronize again before we
@@ -551,7 +577,7 @@ __global__ void ccl_kernel2(
      * Run FastSV algorithm, which will update the father index to that of the
      * cell belonging to the same cluster with the lowest index.
      */
-    fast_sv_1(f, f_next, adjc, adjv, tid, blckDim);
+    fast_sv_1(f, adjc, adjv, tid, blckDim);
     __syncthreads();
     /*
      * Count the number of clusters by checking how many cells have
