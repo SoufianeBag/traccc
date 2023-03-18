@@ -490,7 +490,7 @@ __global__ void ccl_kernel2(
     */
    __shared__ short flag[2];  
    unsigned int short cell = 999; 
-   __shared__ unsigned int  minWho[4];
+   __shared__ int short minWho[4];
 
 
     #pragma unroll   
@@ -513,7 +513,7 @@ __global__ void ccl_kernel2(
         if (tid % WARP_SIZE == 0 /*&& warp_min != 999 */) {
             minWho[tid/32] = cell;
             if (tid == 0 ) {
-                start = min(minWho[0] , minWho[1] , minWho[2] , minWho[3]) + start;
+                start = std::min(minWho[0] , minWho[1] , minWho[2] , minWho[3]) + start;
                 flag[0] = 1 ; 
                 }
         }
@@ -542,7 +542,7 @@ __global__ void ccl_kernel2(
         if (tid % WARP_SIZE == 0 /*&& warp_min != 999*/ ) {
             minWho[tid/32] = cell;
             if (tid == 0 ) {
-                end = min(minWho[0] , minWho[1] , minWho[2] , minWho[3]) + end ;
+                end = std::min(minWho[0] , minWho[1] , minWho[2] , minWho[3]) + end ;
                 flag[0] = 1 ; 
                 }
         }
