@@ -518,6 +518,7 @@ __global__ void ccl_kernel2(
              /*printf("minWho[1] %u ", minWho[1]);
              printf("minWho[2] %u ", minWho[2]);
              printf("minWho[3] %u \n", minWho[3]); */
+             __syncthreads();
             if (tid == 0 ) {
                 start = std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3] }) + start;
                 flag[0] = 1 ; 
@@ -548,6 +549,7 @@ __global__ void ccl_kernel2(
         if (tid % WARP_SIZE == 0 /*&& warp_min != 999 */) {
             minWho[tid/32] = cell;
             }
+            __syncthreads();
             if (tid == 0 ) {
                 end = std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3]} ) + end ;
                 flag[0] = 1 ; 
