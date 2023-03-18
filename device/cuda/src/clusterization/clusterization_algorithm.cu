@@ -529,7 +529,7 @@ __global__ void ccl_kernel2(
         
         
     }
-
+    printf("hello \n ");
 
     /*cell = 999;
     #pragma unroll  
