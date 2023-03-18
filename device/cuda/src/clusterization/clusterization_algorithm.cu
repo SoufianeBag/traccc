@@ -521,7 +521,7 @@ __global__ void ccl_kernel2(
                 //printf("min %u blockIdx.x %u \n" , start , blockIdx.x);
                 break;
                 }
-        __syncthreads();
+        //__syncthreads();
         if (flag[0] == 1 ) break;
                    
         
