@@ -511,7 +511,7 @@ __global__ void ccl_kernel2(
         printf(" warp_min %u \n", warp_min);
         __syncthreads();  
         // thread with lane id 0 writes the result 
-        if (tid % WARP_SIZE == 0 /*&& warp_min != 999 */) {
+        if (tid % WARP_SIZE == 0 && warp_min != 999 ) {
             minWho[tid/32] = cell;
             /*printf("minWho[0] %u", minWho[0]);
              printf("minWho[1] %u ", minWho[1]);
@@ -544,7 +544,7 @@ __global__ void ccl_kernel2(
         // find minimum value in the warp          
         int warp_min = warpReduceMin(cell);
         // thread with lane id 0 writes the result to global memory
-        if (tid % WARP_SIZE == 0 /*&& warp_min != 999*/ ) {
+        if (tid % WARP_SIZE == 0 && warp_min != 999 ) {
             minWho[tid/32] = cell;
             if (tid == 0 ) {
                 end = std::min(minWho[0] , minWho[1] ) + end ;
