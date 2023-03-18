@@ -517,11 +517,10 @@ __global__ void ccl_kernel2(
             }
         __syncthreads();
         if (tid == 0 && flag[0] == 1 ) {
-                start = std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3] })    ;
-                printf("min %u blockIdx.x %u \n" , start , blockIdx.x);
-                break;
+                start += std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3] })    ;
+                //printf("min %u blockIdx.x %u \n" , start , blockIdx.x);
                 }
-        //__syncthreads();
+        __syncthreads();
         if (flag[0] == 1 ) break;
                    
         
