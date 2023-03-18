@@ -3,6 +3,11 @@
         "xstring": "cpp",
         "xutility": "cpp",
         "*.ipp": "cpp",
-        "charconv": "cpp"
+        "charconv": "cpp",
+        "algorithm": "cpp",
+        "chrono": "cpp",
+        "limits": "cpp",
+        "random": "cpp",
+        "utility": "cpp"
     }
 }
