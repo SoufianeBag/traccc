@@ -407,10 +407,10 @@ __global__ void ccl_kernel2(
             start = 0;
         }
         else {
-            start = std::min(num_cells-1, (blockIdx.x+1) * target_cells_per_partition);
+            start = num_cells -1 ;
         }
         assert(start < num_cells);
-        end = std::min(num_cells, (blockIdx.x+1) * target_cells_per_partition);
+        end = num_cells;
         //end2 = std::min(num_cells, start + target_cells_per_partition);
         outi = 0;
 
@@ -432,13 +432,13 @@ __global__ void ccl_kernel2(
          * current block to ensure that we do not end our partition on a cell
          * that is not a possible boundary!
          */
-        while (end < num_cells &&
+       /* while (end < num_cells &&
                cells_device[end - 1].module_link ==
                    cells_device[end].module_link &&
                cells_device[end].c.channel1 <=
                    cells_device[end - 1].c.channel1 + 1) {
             ++end;
-        }
+        } */
     }
     __syncthreads();
 
@@ -455,17 +455,17 @@ __global__ void ccl_kernel2(
     }
     __syncthreads();
 
-    /*for (unsigned int cid = end2 + tid;
+    for (unsigned int cid = (blockIdx.x+1) * target_cells_per_partition + tid;   /////  (blockIdx.x+1) * target_cells_per_partition + tid
          cid < num_cells; cid += blckDim) {
         if (cells_device[cid-1].module_link !=
                    cells_device[cid].module_link ||
                cells_device[cid-1].c.channel1+1 <
                    cells_device[cid].c.channel1) {
-            atomicMin(&end2, cid);
+            atomicMin(&end, cid);
             break;
         }
     }
-    __syncthreads();*/
+    
 
     /*if (start != start2) {
         printf("th %u start %u start2 %u\n",
