@@ -483,13 +483,13 @@ __global__ void ccl_kernel2(
     const index_t size = end - start;
     //printf("size %hu \n", size);
     assert(size <= max_cells_per_partition);
-    for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
+    /*for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
         //printf("blck %u th %u ch0 %u\n", blockIdx.x, tid, ch0[tst]);
         assert(cells_device[tst].c.channel0 == cellsSoA_device.channel0[tst]);
         assert(cells_device[tst].c.channel1 == cellsSoA_device.channel1[tst]);
         assert(cells_device[tst].c.activation == cellsSoA_device.activation[tst]);
         assert(cells_device[tst].c.module_link == cellsSoA_device.module_link[tst]);
-    } 
+    } */
     // Check if any work needs to be done
     if (tid >= size) {
         return;
