@@ -498,7 +498,7 @@ __global__ void ccl_kernel2(
    {
    __shared__ short flag[2];  
    unsigned int short cell = 9999; 
-   __shared__ int short minWho[4];
+   
 
 
       
