@@ -508,13 +508,13 @@ __global__ void ccl_kernel2(
         // find minimum value in the warp  
         __syncthreads();        
         int warp_min = warpReduceMin(cell);
-        printf("warp_min %u \n", warp_min );
+        //printf("warp_min %u \n", warp_min );
         __syncthreads();  
         // thread with lane id 0 writes the result 
         if (tid % WARP_SIZE == 0 && warp_min != 999 ) {
             minWho[tid/32] = cell;
-            /*printf("minWho[0] %u", minWho[0]);
-             printf("minWho[1] %u ", minWho[1]);
+            printf(" tid/32 %u \n ", tid/32);
+             /*printf("minWho[1] %u ", minWho[1]);
              printf("minWho[2] %u ", minWho[2]);
              printf("minWho[3] %u \n", minWho[3]); */
             if (tid == 0 ) {
