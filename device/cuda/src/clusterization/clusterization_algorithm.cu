@@ -512,7 +512,7 @@ __global__ void ccl_kernel2(
         __syncthreads();  
         // thread with lane id 0 writes the result 
         if (tid % WARP_SIZE == 0 && warp_min != 9999) {
-            minWho[tid/32] = cell;
+            minWho[tid/32] = warp_min;
             flag[0] = 1 ;
             }
              __syncthreads();
