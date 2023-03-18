@@ -453,7 +453,7 @@ __global__ void ccl_kernel2(
                    cells_device[end - 1].c.channel1 + 1) {
             ++end;
         } 
-        printf(" end %u \n ", end);
+        printf(" end %u  blockIdx.x %u \n ", end , blockIdx.x);
         
     }
     __syncthreads();
