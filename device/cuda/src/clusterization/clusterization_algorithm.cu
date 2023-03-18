@@ -513,7 +513,7 @@ __global__ void ccl_kernel2(
         if (tid % WARP_SIZE == 0 /*&& warp_min != 999 */) {
             minWho[tid/32] = cell;
             if (tid == 0 ) {
-                start = std::min(minWho[0] , minWho[1] , minWho[2] , minWho[3]) + start;
+                start = std::min(minWho[0] , minWho[1] ) + start;
                 flag[0] = 1 ; 
                 }
         }
@@ -542,7 +542,7 @@ __global__ void ccl_kernel2(
         if (tid % WARP_SIZE == 0 /*&& warp_min != 999*/ ) {
             minWho[tid/32] = cell;
             if (tid == 0 ) {
-                end = std::min(minWho[0] , minWho[1] , minWho[2] , minWho[3]) + end ;
+                end = std::min(minWho[0] , minWho[1] ) + end ;
                 flag[0] = 1 ; 
                 }
         }
