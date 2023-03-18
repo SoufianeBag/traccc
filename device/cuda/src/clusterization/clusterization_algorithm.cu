@@ -437,24 +437,24 @@ __global__ void ccl_kernel2(
                    cells_device[start - 1].c.channel1 + 1) {
             ++start;
         }*/
-
+        start = blockIdx.x * target_cells_per_partition;
+        assert(start < num_cells);
+        end = std::min(num_cells, start + target_cells_per_partition);
+        outi = 0;
         /*
          * Then, claim as many cells as we need past the naive end of the
          * current block to ensure that we do not end our partition on a cell
          * that is not a possible boundary!
          */
-       /* while (end < num_cells &&
+        while (end < num_cells &&
                cells_device[end - 1].module_link ==
                    cells_device[end].module_link &&
                cells_device[end].c.channel1 <=
                    cells_device[end - 1].c.channel1 + 1) {
             ++end;
-        } */
+        } 
 
-        start = blockIdx.x * target_cells_per_partition;
-        assert(start < num_cells);
-        end = std::min(num_cells, start + target_cells_per_partition);
-        outi = 0;
+        
     }
     __syncthreads();
 
@@ -521,7 +521,7 @@ __global__ void ccl_kernel2(
              __syncthreads();
             if (tid == 0 ) {
                 start = std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3] }) + start;
-                printf("start %u blockIdx.x %u  \n", start , blockIdx.x);
+                //printf("start %u blockIdx.x %u  \n", start , blockIdx.x);
                 flag[0] = 1 ; 
                 }
         
@@ -531,7 +531,7 @@ __global__ void ccl_kernel2(
     }
 
 
-    cell = 999;
+    /*cell = 999;
     #pragma unroll  
     for (index_t iter = 0; iter < 8; ++iter) {
         
@@ -542,13 +542,13 @@ __global__ void ccl_kernel2(
                    cells_device[end + cell_id].c.channel1 >
                    cells_device[end + cell_id - 1].c.channel1 + 1 ) {  // cells_device[end + cell_id].c.channel1 >cells_device[end + cell_id - 1].c.channel1 + 1 : so we garanty that there is no cell in the edge
                     cell = cell_id;
-                    }  /// if : end >= num_cells , the value of "end" will not change 
-        __syncthreads();            
+                    } */ /// if : end >= num_cells , the value of "end" will not change 
+        //__syncthreads();            
         // find minimum value in the warp          
-        int warp_min = warpReduceMin(cell);
+        //int warp_min = warpReduceMin(cell);
         // thread with lane id 0 writes the result to global memory
-        if (tid % WARP_SIZE == 0 /*&& warp_min != 999 */) {
-            minWho[tid/32] = cell;
+        //if (tid % WARP_SIZE == 0 /*&& warp_min != 999 */) {
+           /* minWho[tid/32] = cell;
             }
             __syncthreads();
             if (tid == 0 ) {
@@ -560,7 +560,7 @@ __global__ void ccl_kernel2(
                    
         __syncthreads();   // obligatoire 
         if (flag[1] == 1) break;   
-    }    
+    }  */  
     
 
     __syncthreads();
