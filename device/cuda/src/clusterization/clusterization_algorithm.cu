@@ -555,6 +555,7 @@ __global__ void ccl_kernel2(
      * cell belonging to the same cluster with the lowest index.
      */
     //fast_sv_1(f, f_next, adjc, adjv, tid, blckDim);
+    {
     bool gf_changed;
     do {
         
@@ -579,6 +580,8 @@ __global__ void ccl_kernel2(
             
 
        } while (__syncthreads_or(gf_changed));
+
+    }
 
     __syncthreads();
     /*
