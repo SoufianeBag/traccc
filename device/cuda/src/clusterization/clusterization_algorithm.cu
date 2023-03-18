@@ -368,6 +368,8 @@ __global__ void ccl_kernel2(
      * This variable will be used to write to the output later.
      */
     __shared__ unsigned int outi;
+     __shared__ int short minWho[4];
+
     /*
      * First, we determine the exact range of cells that is to be examined by
      * this block of threads. We start from an initial range determined by the
@@ -453,7 +455,12 @@ __global__ void ccl_kernel2(
                    cells_device[end - 1].c.channel1 + 1) {
             ++end;
         } 
-        
+          minWho[0] = 9999;
+          minWho[1] = 9999;
+          minWho[2] = 9999;
+          minWho[3] = 9999;
+          
+
         
     }
     __syncthreads();
@@ -488,6 +495,7 @@ __global__ void ccl_kernel2(
     /*
     locating the start and the end of the partition
     */
+   {
    __shared__ short flag[2];  
    unsigned int short cell = 9999; 
    __shared__ int short minWho[4];
@@ -526,7 +534,7 @@ __global__ void ccl_kernel2(
         
         
     }
-    
+   }
 
     /*cell = 999;
     #pragma unroll  
