@@ -8,6 +8,15 @@
         "chrono": "cpp",
         "limits": "cpp",
         "random": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "array": "cpp",
+        "format": "cpp",
+        "forward_list": "cpp",
+        "initializer_list": "cpp",
+        "list": "cpp",
+        "vector": "cpp",
+        "xhash": "cpp",
+        "xiosbase": "cpp",
+        "xtree": "cpp"
     }
 }
