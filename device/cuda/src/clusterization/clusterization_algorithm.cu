@@ -508,11 +508,14 @@ __global__ void ccl_kernel2(
         // find minimum value in the warp  
         __syncthreads();        
         int warp_min = warpReduceMin(cell);
+        __syncthreads();  
         // thread with lane id 0 writes the result 
-        if (tid % WARP_SIZE == 0 && warp_min != 999) {
+        if (tid % WARP_SIZE == 0 /*&& warp_min != 999 */) {
             minWho[tid/32] = cell;
-            start += min(minWho);
-            if (tid == 0 ) flag[0] = 1 ; 
+            if (tid == 0 ) {
+                start = min(minWho) + start;
+                flag[0] = 1 ; 
+                }
         }
                    
         __syncthreads();
@@ -536,10 +539,12 @@ __global__ void ccl_kernel2(
         // find minimum value in the warp          
         int warp_min = warpReduceMin(cell);
         // thread with lane id 0 writes the result to global memory
-        if (tid % WARP_SIZE == 0 && warp_min != 999 ) {
+        if (tid % WARP_SIZE == 0 /*&& warp_min != 999*/ ) {
             minWho[tid/32] = cell;
-            end += min(minWho) ;
-            if (tid == 0 ) flag[0] = 1 ;
+            if (tid == 0 ) {
+                end = min(minWho) + end ;
+                flag[0] = 1 ; 
+                }
         }
                    
         __syncthreads();   // obligatoire 
