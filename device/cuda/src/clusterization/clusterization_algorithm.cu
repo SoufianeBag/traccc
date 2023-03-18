@@ -522,6 +522,7 @@ __global__ void ccl_kernel2(
                 break;
                 }
         
+            if (flag[0] == 1 ) break;
                    
         
         
