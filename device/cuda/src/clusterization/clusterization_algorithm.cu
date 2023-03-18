@@ -453,7 +453,7 @@ __global__ void ccl_kernel2(
                    cells_device[end - 1].c.channel1 + 1) {
             ++end;
         } 
-        printf(" end %u  blockIdx.x %u \n ", end , blockIdx.x);
+        
         
     }
     __syncthreads();
@@ -521,7 +521,7 @@ __global__ void ccl_kernel2(
              __syncthreads();
             if (tid == 0 ) {
                 start = std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3] }) + start;
-                //printf("start %u blockIdx.x %u  \n", start , blockIdx.x);
+                printf("start %u blockIdx.x %u  \n", start , blockIdx.x);
                 flag[0] = 1 ; 
                 }
         
