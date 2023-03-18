@@ -455,7 +455,7 @@ __global__ void ccl_kernel2(
     }
     __syncthreads();
 
-    for (unsigned int cid = (blockIdx.x+1) * target_cells_per_partition + tid;   /////  (blockIdx.x+1) * target_cells_per_partition + tid
+    for (unsigned int cid = (blockIdx.x+1) * target_cells_per_partition + tid;   
          cid < num_cells; cid += blckDim) {
         if (cells_device[cid-1].module_link !=
                    cells_device[cid].module_link ||
@@ -588,6 +588,7 @@ __global__ void ccl_kernel2(
      * Count the number of clusters by checking how many cells have
      * themself assigned as a parent.
      */
+
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         if (f[cid] == cid) {
             atomicAdd(&outi, 1);
@@ -618,6 +619,7 @@ __global__ void ccl_kernel2(
     }
     __syncthreads();
     vecmem::data::vector_view<index_t> f_view(max_cells_per_partition, f);
+    #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         if (f[cid] == cid) {
             /*
