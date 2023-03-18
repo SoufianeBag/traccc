@@ -493,7 +493,7 @@ __global__ void ccl_kernel2(
    __shared__ int short minWho[4];
 
 
-    #pragma unroll   
+      
     for (index_t iter = 0; iter < 8; ++iter) {
          
         const index_t cell_id = iter * blckDim + tid;  
