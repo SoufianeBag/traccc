@@ -445,10 +445,10 @@ __global__ void ccl_kernel2(
     if (blockIdx.x != 0)
     for (unsigned int cid = target_cells_per_partition * blockIdx.x + tid;
          cid < end; cid += blckDim) {
-        if ((cells_device[cid-1].module_link !=
-                cells_device[cid].module_link) ||
-            (cells_device[cid-1].c.channel1+1 <
-                cells_device[cid].c.channel1)) {
+        if ((cellsSoA_device[cid-1].module_link !=
+                cellsSoA_device[cid].module_link) ||
+            (cellsSoA_device[cid-1].channel1+1 <
+                cellsSoA_device[cid].channel1)) {
             atomicMin(&start, cid);
             break;
         }
@@ -457,10 +457,10 @@ __global__ void ccl_kernel2(
 
     for (unsigned int cid = (blockIdx.x+1) * target_cells_per_partition + tid;   
          cid < num_cells; cid += blckDim) {
-        if (cells_device[cid-1].module_link !=
-                   cells_device[cid].module_link ||
-               cells_device[cid-1].c.channel1+1 <
-                   cells_device[cid].c.channel1) {
+        if (cellsSoA_device[cid-1].module_link !=
+                   cellsSoA_device[cid].module_link ||
+               cellsSoA_device[cid-1].channel1+1 <
+                   cellsSoA_device[cid].channel1) {
             atomicMin(&end, cid);
             break;
         }
