@@ -17,6 +17,7 @@
         "vector": "cpp",
         "xhash": "cpp",
         "xiosbase": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "system_error": "cpp"
     }
 }

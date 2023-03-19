@@ -532,6 +532,7 @@ __global__ void ccl_kernel2(
      */
     extern __shared__ index_t shared_v[];
     index_t* f = &shared_v[0];
+    index_t* vsmem = &shared_v[max_cells_per_partition];
     
 
 #pragma unroll
@@ -556,6 +557,10 @@ __global__ void ccl_kernel2(
     //fast_sv_1(f, f_next, adjc, adjv, tid, blckDim);
     {
     bool gf_changed;
+    for ( k=0; k < MAX_CELLS_PER_THREAD ; ++k) { // fill the prefetch buffer asynchronously
+  __pipeline_memcpy_async(&vsmem( k * ( blckDim * 8 )  + tid*8 ), &adjv[k], 8);
+  __pipeline_commit();  
+}
     do {
         
        
@@ -564,13 +569,15 @@ __global__ void ccl_kernel2(
         #pragma unroll
         for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
             const index_t cid = tst * blckDim + tid;
+            __pipeline_wait_prior(stream); //wait on needed prefetch value
             
             
                 #pragma unroll
                 for (index_t i = 0; i < adjc[tst]; ++i){    // neighbors communication
-                if (f[cid] > f[adjv[tst][i]]) 
+                index_t id = tst * ( blckDim * 8 )  + tid*8 + i ;
+                if (f[cid] > f[vsmem[id]]) 
                 {
-                    f[cid] = f[adjv[tst][i]];
+                    f[cid] = f[vsmem[id]];
                     gf_changed = true; 
                 }
                 
