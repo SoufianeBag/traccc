@@ -555,11 +555,11 @@ __syncthreads();
         // thread with lane id 0 writes the result to global memory
         if (tid % WARP_SIZE == 0 && warp_min != 9999 ) {
             minWho[tid/32] = warp_min;
-            printf("warp_min %u \n", warp_min);
+            //printf("warp_min %u \n", warp_min);
             flag[1] == 1;
             }
             __syncthreads();
-            if (tid == 0 && flag[1] == 50 ) {
+            if (tid == 0 && flag[1] == 1 ) {
                 end = std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3]} ) + end ;
                 }
         
