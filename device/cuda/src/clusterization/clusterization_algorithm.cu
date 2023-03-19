@@ -414,7 +414,6 @@ __global__ void ccl_kernel2(
         end = std::min(num_cells, (blockIdx.x+1) * target_cells_per_partition);
         //end2 = std::min(num_cells, start + target_cells_per_partition);
         outi = 0;
-​
         /*
          * Next, shift the starting point to a position further in the array;
          * the purpose of this is to ensure that we are not operating on any
@@ -427,7 +426,7 @@ __global__ void ccl_kernel2(
                    cells_device[start - 1].c.channel1 + 1) {
             ++start;
         }
-​
+
         /*
          * Then, claim as many cells as we need past the naive end of the
          * current block to ensure that we do not end our partition on a cell
@@ -442,8 +441,8 @@ __global__ void ccl_kernel2(
         }
     }
     __syncthreads();
-​/*
-    if (blockIdx.x != 0)
+
+/*    if (blockIdx.x != 0)
     for (unsigned int cid = target_cells_per_partition * blockIdx.x + tid;
          cid < end; cid += blckDim) {
         if ((cells_device[cid-1].module_link !=
