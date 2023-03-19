@@ -53,6 +53,15 @@ namespace kernels {
 /// @param[in] adjv     Vector of adjacent cells
 /// @param[in] tid      The thread index
 ///
+
+TRACCC_DEVICE
+bool is_adjacent2(channel_id ac0, channel_id ac1, channel_id bc0,
+                 channel_id bc1) {
+    unsigned int p0 = (ac0 - bc0);
+    unsigned int p1 = (ac1 - bc1);
+
+    return p0 * p0 <= 1 && p1 * p1 <= 1;
+}
 __device__ void fast_sv_1(index_t* f, index_t* gf,
                           unsigned char adjc[MAX_CELLS_PER_THREAD],
                           index_t adjv[MAX_CELLS_PER_THREAD][8], index_t tid,
