@@ -152,7 +152,7 @@ inline void reduce_problem_cell2(
            if((j)< min_id) min_id = j;
         }
     }
-id_clusters[cid].id_cluster = min_id;
+    id_clusters[cid].id_cluster = min_id;
     }
 
 }  // namespace traccc::device

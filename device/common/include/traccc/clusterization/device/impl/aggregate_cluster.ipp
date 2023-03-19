@@ -116,7 +116,7 @@ inline void aggregate_cluster2(
     const cell_module_collection_types::const_device& modules,
     const vecmem::data::vector_view<cluster> f_view,
     const unsigned int start, const unsigned int end, const unsigned short cid,
-    alt_measurement& out, vecmem::data::vector_view<unsigned int> cell_links,
+    spacepoint& out, vecmem::data::vector_view<unsigned int> cell_links,
     const unsigned int link) {
 
     const vecmem::device_vector<cluster> id_clusters(f_view);
@@ -202,10 +202,14 @@ inline void aggregate_cluster2(
     /*
      * Fill output vector with calculated cluster properties
      */
-    out.local = mean;
-    out.variance = var;
-    out.module_link = mod_link;
+   
     //printf(" mean[0] %u , mean[1] %u \n " , mean[0] ,  mean[1] );
+     point3 local_3d = {mean[0], mean[1], 0.};
+    point3 global = mod.placement.point_to_global(local_3d);
+    out.global = global;
+    out.meas = {mean, var, 0};
+    // Fill the result object with this spacepoint
+   // spacepoints_device[globalIndex] = {global, {mean, var, 0}};
 }
 
 }  // namespace traccc::device
