@@ -205,7 +205,7 @@ inline void aggregate_cluster2(
    
     //printf(" mean[0] %u , mean[1] %u \n " , mean[0] ,  mean[1] );
      point3 local_3d = {mean[0], mean[1], 0.};
-    point3 global = mod.placement.point_to_global(local_3d);
+    point3 global = this_module.placement.point_to_global(local_3d);
     out.global = global;
     out.meas = {mean, var, 0};
     // Fill the result object with this spacepoint

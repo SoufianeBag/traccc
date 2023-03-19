@@ -97,7 +97,7 @@ inline void reduce_problem_cell2(
     const unsigned short cid, const unsigned int start, const unsigned int end,
     unsigned char& adjc, unsigned short adjv[8], cluster* id_clusters) {
 
-    const unsigned int pos = cid + start;
+    //const unsigned int pos = cid + start;
 
     // Check if this code can benefit from changing to structs of arrays, as the
     // recurring accesses to cell data in global memory is slow right now.

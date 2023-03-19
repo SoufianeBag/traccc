@@ -358,7 +358,7 @@ __global__ void ccl_kernel2(
     /*
      * This variable will be used to write to the output later.
      */
-    __shared__ unsigned int outi, count;
+    __shared__ unsigned int outi;
     /*
      * First, we determine the exact range of cells that is to be examined by
      * this block of threads. We start from an initial range determined by the
@@ -374,7 +374,7 @@ __global__ void ccl_kernel2(
         assert(start < num_cells);
         end = std::min(num_cells, start + target_cells_per_partition);
         outi = 0;
-        count = 0;
+        
 
         /*
          * Next, shift the starting point to a position further in the array;
@@ -419,8 +419,7 @@ __global__ void ccl_kernel2(
     }
     const cell_module_collection_types::const_device modules_device(
         modules_view);
-    alt_measurement_collection_types::device measurements_device(
-        measurements_view);
+    //alt_measurement_collection_types::device measurements_device(measurements_view);
     spacepoint_collection_types::device spacepoints_device(spacepoints_view);
     // Vector of indices of the adjacent cells
     index_t adjv[MAX_CELLS_PER_THREAD][8];
@@ -668,7 +667,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
     // Launch ccl kernel. Each thread will handle a single cell.
     kernels::
         ccl_kernel2<<<num_partitions, threads_per_partition,
-                       max_cells_per_partition * sizeof( std::cluster), stream>>>(
+                       max_cells_per_partition * sizeof( cluster), stream>>>(
              modules, cellsSoA, max_cells_per_partition,
             m_target_cells_per_partition, spacepoints_buffer,
             *num_measurements_device, cell_links);
