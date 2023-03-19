@@ -18,10 +18,10 @@ bool is_adjacent(channel_id ac0, channel_id ac1, channel_id bc0,
 }
 
 TRACCC_HOST_DEVICE
-inline void reduce_problem_cell2(
+inline void reduce_problem_cell(
     const alt_cell_collection_types::const_device& cells,
     const unsigned short cid, const unsigned int start, const unsigned int end,
-    unsigned char& adjc, unsigned short adjv[9]) {
+    unsigned char& adjc, unsigned short adjv[8]) {
 
     const unsigned int pos = cid + start;
 
@@ -53,7 +53,6 @@ inline void reduce_problem_cell2(
          */
         if (is_adjacent(c0, c1, cells[j].c.channel0, cells[j].c.channel1)) {
             adjv[adjc++] = j - start;
-            if ( adjv[8] > j - start )  adjv[8] = j - start ;
         }
     }
 
@@ -72,7 +71,6 @@ inline void reduce_problem_cell2(
 
         if (is_adjacent(c0, c1, cells[j].c.channel0, cells[j].c.channel1)) {
             adjv[adjc++] = j - start;
-            if ( adjv[8] > j - start )  adjv[8] = j - start ;
         }
     }
 }
@@ -93,10 +91,10 @@ bool is_adjacent2(channel_id ac0, channel_id ac1, channel_id bc0,
 }
 
 TRACCC_HOST_DEVICE
-inline void reduce_problem_cell(
+inline void reduce_problem_cell2(
     const CellsRefDevice& cellsSoA_device,
     const unsigned short cid, const unsigned int start, const unsigned int end,
-    unsigned char& adjc, unsigned short adjv[8]) {
+    unsigned char& adjc, unsigned short adjv[9]) {
 
     const unsigned int pos = cid + start;
 
@@ -128,6 +126,7 @@ inline void reduce_problem_cell(
          */
         if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
             adjv[adjc++] = j - start;
+            if ( adjv[8] > j - start )  adjv[8] = j - start ;
         }
     }
 
@@ -146,7 +145,8 @@ inline void reduce_problem_cell(
 
         if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
             adjv[adjc++] = j - start;
-           //printf(" j - start %u \n",j - start);
+            if ( adjv[8] > j - start )  adjv[8] = j - start ;
+           
         }
     }
 }
