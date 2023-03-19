@@ -533,7 +533,7 @@ __global__ void ccl_kernel2(
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         
          index_t id = tst*blckDim*8 + tid*8;
-        /*
+        /* 
          * Look for adjacent cells to the current one.
          */
        /* device::reduce_problem_cell2(cellsSoA_device, cid, start, end, adjc[tst],
