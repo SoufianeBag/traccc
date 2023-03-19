@@ -525,7 +525,7 @@ __global__ void ccl_kernel2(
     
 #pragma unroll
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
-        //const index_t cid = tst * blckDim + tid;
+        const index_t cid = tst * blckDim + tid;
         adjc[tst] = 0;
         maxAdj = cid ;
     }
