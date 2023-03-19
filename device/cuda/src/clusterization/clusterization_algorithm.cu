@@ -505,24 +505,87 @@ __global__ void ccl_kernel2(
      * we will only access those values if adjc indicates that the value
      * is set.
      */
+
     // Number of adjacent cells
     unsigned char adjc[MAX_CELLS_PER_THREAD];
+    extern __shared__ index_t shared_v[];
+    index_t* f = &shared_v[0];
+    index_t* vsmem = &shared_v[max_cells_per_partition];
+    
 #pragma unroll
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         const index_t cid = tst * blckDim + tid;
         adjc[tst] = 0;
-        adjv[tst][8] = cid ;
+        maxAdj = cid ;
     }
 #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
+        
+         index_t id = tst*blckDim*8 + tid*8;
         /*
          * Look for adjacent cells to the current one.
          */
-        device::reduce_problem_cell2(cellsSoA_device, cid, start, end, adjc[tst],
-                                    adjv[tst]);
+       /* device::reduce_problem_cell2(cellsSoA_device, cid, start, end, adjc[tst],
+                                    id , vsmem); */
+        
+        const unsigned int pos = cid + start;
+
+    // Check if this code can benefit from changing to structs of arrays, as the
+    // recurring accesses to cell data in global memory is slow right now.
+    const channel_id c0 = cellsSoA_device.channel0[pos];
+    const channel_id c1 = cellsSoA_device.channel1[pos];
+    const unsigned int mod_id = cellsSoA_device.module_link[pos];
+
+    /*
+     * First, we traverse the cells backwards, starting from the current
+     * cell and working back to the first, collecting adjacent cells
+     * along the way.
+     */
+    for (unsigned int j = pos - 1; j < pos; --j) {
+        /*
+         * Since the data is sorted, we can assume that if we see a cell
+         * sufficiently far away in both directions, it becomes
+         * impossible for that cell to ever be adjacent to this one.
+         * This is a small optimisation.
+         */
+        if (cellsSoA_device.channel1[j] + 1 < c1 || cellsSoA_device.module_link[j] != mod_id) {
+            break;
+        }
+
+        /*
+         * If the cell examined is adjacent to the current cell, save it
+         * in the current cell's adjacency set.
+         */
+        if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
+            vsmem[id + adjc ] = j - start;
+            adjc++
+            if ( maxAdj > j - start )  maxAdj = j - start ;
+        }
+    }
+
+    /*
+     * Now we examine all the cells past the current one, using almost
+     * the same logic as in the backwards pass.
+     */
+    for (unsigned int j = pos + 1; j < end; ++j) {
+        /*
+         * Note that this check now looks in the opposite direction! An
+         * important difference.
+         */
+        if (cellsSoA_device.channel1[j] > c1 + 1 || cellsSoA_device.module_link[j] != mod_id) {
+            break;
+        }
+
+        if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
+            vsmem[id + adjc ] = j - start;
+            adjc++
+            if ( maxAdj > j - start )  maxAdj = j - start ;
+           
+        }
+    }
         
     }
-    
+
     /*
      * These arrays are the meat of the pudding of this algorithm, and we
      * will constantly be writing and reading from them which is why we
@@ -531,8 +594,9 @@ __global__ void ccl_kernel2(
      * shared memory is limited. These could always be moved to global memory,
      * but the algorithm would be decidedly slower in that case.
      */
-    extern __shared__ index_t shared_v[];
+    /*extern __shared__ index_t shared_v[];
     index_t* f = &shared_v[0];
+    index_t* vsmem = &shared_v[max_cells_per_partition]; */
     
 
 #pragma unroll
@@ -542,7 +606,7 @@ __global__ void ccl_kernel2(
          * At the start, the values of f and f_next should be equal to the
          * ID of the cell.
          */
-        f[cid] =  adjv[tst][8];
+        f[cid] =  maxAdj;
         
     }
     /*
@@ -565,13 +629,14 @@ __global__ void ccl_kernel2(
         #pragma unroll
         for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
             const index_t cid = tst * blckDim + tid;
+            index_t id = tst*blckDim*8 + tid*8;
             
             
                 #pragma unroll
                 for (index_t i = 0; i < adjc[tst]; ++i){    // neighbors communication
-                if (f[cid] > f[adjv[tst][i]]) 
+                if (f[cid] > f[vsmem[id + i ]]) 
                 {
-                    f[cid] = f[adjv[tst][i]];
+                    f[cid] = f[vsmem[id + i ]];
                     gf_changed = true; 
                 }
                 
