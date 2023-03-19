@@ -55,7 +55,7 @@ namespace kernels {
 ///
 
 TRACCC_DEVICE
-bool is_adjacent2(channel_id ac0, channel_id ac1, channel_id bc0,
+__device__ bool is_adjacent2(channel_id ac0, channel_id ac1, channel_id bc0,
                  channel_id bc1) {
     unsigned int p0 = (ac0 - bc0);
     unsigned int p1 = (ac1 - bc1);
