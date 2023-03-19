@@ -502,19 +502,19 @@ __syncthreads();
      * amount of threads per block, this has no sever implications.
      */
     if (tid == 0) {
-        count = atomicAdd(&measurement_count, outi);
+        outi = atomicAdd(&measurement_count, outi);
         //printf("outi %u \n", outi);
     }
     __syncthreads();
     /*
      * Get the position to fill the measurements found in this thread group.
      */
-    //const unsigned int groupPos = outi;
-   /* __syncthreads();
+    const unsigned int groupPos = outi;
+   __syncthreads();
     if (tid == 0) {
         outi = 0;
     }
-    __syncthreads();*/
+    __syncthreads();
     //vecmem::data::vector_view<index_t> f_view(max_cells_per_partition, f);
     #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
@@ -523,10 +523,10 @@ __syncthreads();
              * If we are a cluster owner, atomically claim a position in the
              * output array which we can write to.
              */
-            const unsigned int id = atomicAdd(&count, 1);
+            const unsigned int id = atomicAdd(&outi, 1);
             device::aggregate_cluster2(
                 modules_device, id_clusters, start, end, cid,
-                measurements_device[id], cell_links, id); 
+                measurements_device[groupPos+id], cell_links, groupPos+id); 
         }
     }
 }

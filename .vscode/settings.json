@@ -3,6 +3,13 @@
         "xstring": "cpp",
         "xutility": "cpp",
         "*.ipp": "cpp",
-        "charconv": "cpp"
+        "charconv": "cpp",
+        "locale": "cpp",
+        "thread": "cpp",
+        "xlocale": "cpp",
+        "xlocmes": "cpp",
+        "xlocmon": "cpp",
+        "xlocnum": "cpp",
+        "xloctime": "cpp"
     }
 }
