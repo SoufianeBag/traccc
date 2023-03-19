@@ -364,56 +364,15 @@ __global__ void ccl_kernel2(
      * shift both the start and the end of the block forward (to a later point
      * in the array); start and end may be moved different amounts.
      */
-    //if (tid == 0) {  /////////////////////////////////////old
-        /*
-         * Initialize shared variables.
-         */
-        /*start = blockIdx.x * target_cells_per_partition;
-        assert(start < num_cells);
-        end = std::min(num_cells, start + target_cells_per_partition);
-        outi = 0; */
-        /*
-         * Next, shift the starting point to a position further in the array;
-         * the purpose of this is to ensure that we are not operating on any
-         * cells that have been claimed by the previous block (if any).
-         */
-        /*while (start != 0 &&
-               cellsSoA_device.module_link[start - 1] ==
-                   cellsSoA_device.module_link[start] &&
-               cellsSoA_device.channel1[start] <=
-                   cellsSoA_device.channel1[start - 1] + 1) {
-            ++start;
-        }*/
-
-        /*
-         * Then, claim as many cells as we need past the naive end of the
-         * current block to ensure that we do not end our partition on a cell
-         * that is not a possible boundary!
-         */
-        /*while (end < num_cells &&
-               cellsSoA_device.module_link[end - 1] ==
-                   cellsSoA_device.module_link[end] &&
-               cellsSoA_device.channel1[end] <=
-                   cellsSoA_device.channel1[end - 1] + 1) {
-            ++end;
-        }
-    } */ ///////////////////////////////////////////////////////old
- 
     if (tid == 0) {
         /*
          * Initialize shared variables.
          */
-        //start = blockIdx.x * target_cells_per_partition;
-        if (blockIdx.x == 0) {
-            start = 0;
-        }
-        else {
-            start = num_cells-1;
-        }
+        start = blockIdx.x * target_cells_per_partition;
         assert(start < num_cells);
-        end = std::min(num_cells, (blockIdx.x+1) * target_cells_per_partition);
-        //end2 = std::min(num_cells, start + target_cells_per_partition);
+        end = std::min(num_cells, start + target_cells_per_partition);
         outi = 0;
+
         /*
          * Next, shift the starting point to a position further in the array;
          * the purpose of this is to ensure that we are not operating on any
@@ -441,56 +400,16 @@ __global__ void ccl_kernel2(
         }
     }
     __syncthreads();
-
-/*    if (blockIdx.x != 0)
-    for (unsigned int cid = target_cells_per_partition * blockIdx.x + tid;
-         cid < end; cid += blckDim) {
-        if ((cells_device[cid-1].module_link !=
-                cells_device[cid].module_link) ||
-            (cells_device[cid-1].c.channel1+1 <
-                cells_device[cid].c.channel1)) {
-            atomicMin(&start, cid);
-            break;
-        }
-    }
-    __syncthreads();
-​
-    for (unsigned int cid = end2 + tid;
-         cid < num_cells; cid += blckDim) {
-        if (cells_device[cid-1].module_link !=
-                   cells_device[cid].module_link ||
-               cells_device[cid-1].c.channel1+1 <
-                   cells_device[cid].c.channel1) {
-            atomicMin(&end2, cid);
-            break;
-        }
-    }
-    __syncthreads();
-​*/
-    /*if (start != start2) {
-        printf("th %u start %u start2 %u\n",
-            target_cells_per_partition * blockIdx.x + tid,
-            start, start2);
-    }
-​
-    if (end != end2) {
-        printf("th %u end %u end2 %u\n",
-            target_cells_per_partition * blockIdx.x + tid,
-            end, end2);
-    }*/
-
-    ////////////////////////////////
-    __syncthreads();
     const index_t size = end - start;
     //printf("size %hu \n", size);
     assert(size <= max_cells_per_partition);
-  for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
+    /*for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
         //printf("blck %u th %u ch0 %u\n", blockIdx.x, tid, ch0[tst]);
         assert(cells_device[tst].c.channel0 == cellsSoA_device.channel0[tst]);
         assert(cells_device[tst].c.channel1 == cellsSoA_device.channel1[tst]);
         assert(cells_device[tst].c.activation == cellsSoA_device.activation[tst]);
         assert(cells_device[tst].c.module_link == cellsSoA_device.module_link[tst]);
-    } 
+    } */
     // Check if any work needs to be done
     if (tid >= size) {
         return;
@@ -500,7 +419,7 @@ __global__ void ccl_kernel2(
     alt_measurement_collection_types::device measurements_device(
         measurements_view);
     // Vector of indices of the adjacent cells
-    index_t adjv[MAX_CELLS_PER_THREAD][8];
+    index_t adjv[MAX_CELLS_PER_THREAD][9];
     /*
      * The number of adjacent cells for each cell must start at zero, to
      * avoid uninitialized memory. adjv does not need to be zeroed, as
@@ -511,7 +430,9 @@ __global__ void ccl_kernel2(
     unsigned char adjc[MAX_CELLS_PER_THREAD];
 #pragma unroll
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
+        const index_t cid = tst * blckDim + tid;
         adjc[tst] = 0;
+        adjv[tst][8] = cid ;
     }
 #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
@@ -532,7 +453,8 @@ __global__ void ccl_kernel2(
      */
     extern __shared__ index_t shared_v[];
     index_t* f = &shared_v[0];
-    index_t* f_next = &shared_v[max_cells_per_partition];
+    
+
 #pragma unroll
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         const index_t cid = tst * blckDim + tid;
@@ -540,8 +462,8 @@ __global__ void ccl_kernel2(
          * At the start, the values of f and f_next should be equal to the
          * ID of the cell.
          */
-        f[cid] = cid;
-        f_next[cid] = cid;
+        f[cid] =  adjv[tst][8];
+        
     }
     /*
      * Now that the data has initialized, we synchronize again before we
@@ -552,12 +474,41 @@ __global__ void ccl_kernel2(
      * Run FastSV algorithm, which will update the father index to that of the
      * cell belonging to the same cluster with the lowest index.
      */
-    fast_sv_1(f, f_next, adjc, adjv, tid, blckDim);
+    //fast_sv_1(f, f_next, adjc, adjv, tid, blckDim);
+    {
+    bool gf_changed;
+    do {
+        
+       
+        gf_changed = false;
+
+        #pragma unroll
+        for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
+            const index_t cid = tst * blckDim + tid;
+            
+            
+                #pragma unroll
+                for (index_t i = 0; i < adjc[tst]; ++i){    // neighbors communication
+                if (f[cid] > f[adjv[tst][i]]) 
+                {
+                    f[cid] = f[adjv[tst][i]];
+                    gf_changed = true; 
+                }
+                
+                }
+            }
+            
+
+       } while (__syncthreads_or(gf_changed));
+
+    }
+
     __syncthreads();
     /*
      * Count the number of clusters by checking how many cells have
      * themself assigned as a parent.
      */
+
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         if (f[cid] == cid) {
             atomicAdd(&outi, 1);
@@ -588,6 +539,7 @@ __global__ void ccl_kernel2(
     }
     __syncthreads();
     vecmem::data::vector_view<index_t> f_view(max_cells_per_partition, f);
+    #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         if (f[cid] == cid) {
             /*
@@ -735,7 +687,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
     // Launch ccl kernel. Each thread will handle a single cell.
     kernels::
         ccl_kernel2<<<num_partitions, threads_per_partition,
-                      2 * max_cells_per_partition * sizeof(index_t), stream>>>(
+                       max_cells_per_partition * sizeof(index_t), stream>>>(
             cells, modules, cellsSoA, max_cells_per_partition,
             m_target_cells_per_partition, measurements_buffer,
             *num_measurements_device, cell_links);
