@@ -54,13 +54,13 @@ namespace kernels {
 /// @param[in] tid      The thread index
 ///
 
-TRACCC_DEVICE
+
 __device__ bool is_adjacent2(channel_id ac0, channel_id ac1, channel_id bc0,
                  channel_id bc1) {
     unsigned int p0 = (ac0 - bc0);
     unsigned int p1 = (ac1 - bc1);
 
-    return p0 * p0 <= 1 && p1 * p1 <= 1;
+    return (p0 * p0 <= 1 && p1 * p1 <= 1);
 }
 __device__ void fast_sv_1(index_t* f, index_t* gf,
                           unsigned char adjc[MAX_CELLS_PER_THREAD],
@@ -507,7 +507,7 @@ __global__ void ccl_kernel2(
     alt_measurement_collection_types::device measurements_device(
         measurements_view);
     // Vector of indices of the adjacent cells
-    index_t adjv[MAX_CELLS_PER_THREAD][9];
+    //index_t adjv[MAX_CELLS_PER_THREAD][9];
     index_t maxAdj ; 
     /*
      * The number of adjacent cells for each cell must start at zero, to
