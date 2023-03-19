@@ -533,7 +533,7 @@ __global__ void ccl_kernel2(
         if (flag[0] == 1 ) break;
   
         
-    }
+    
    }
 
     cell = 999;
@@ -566,7 +566,7 @@ __global__ void ccl_kernel2(
         if (flag[1] == 1) break;   
     }   
     
-
+    }
     __syncthreads();
     const index_t size = end - start;
    //printf("size %hu \n", size);
