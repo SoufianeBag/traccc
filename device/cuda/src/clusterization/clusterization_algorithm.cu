@@ -522,6 +522,7 @@ __global__ void ccl_kernel2(
                                     adjv[tst]);
         
     }
+    
     /*
      * These arrays are the meat of the pudding of this algorithm, and we
      * will constantly be writing and reading from them which is why we
