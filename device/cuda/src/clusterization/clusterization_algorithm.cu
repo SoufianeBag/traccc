@@ -535,7 +535,7 @@ __global__ void ccl_kernel2(
         
     
    }
-
+__syncthreads();
     cell = 9999;
     #pragma unroll  
     for (index_t iter = 0; iter < 8; ++iter) {
