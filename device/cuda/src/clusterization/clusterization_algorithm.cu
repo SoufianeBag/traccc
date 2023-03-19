@@ -554,7 +554,7 @@ __global__ void ccl_kernel2(
         // thread with lane id 0 writes the result to global memory
         if (tid % WARP_SIZE == 0 && warp_min != 9999 ) {
             minWho[tid/32] = cell;
-            flag[1] == 1
+            flag[1] == 1;
             }
             __syncthreads();
             if (tid == 0 && flag[1] == 1 ) {
