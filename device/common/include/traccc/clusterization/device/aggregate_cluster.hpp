@@ -43,7 +43,7 @@ TRACCC_DEVICE
 inline void aggregate_cluster2(
     const CellsRefDevice& cellsSoA_device,
     const cell_module_collection_types::const_device& modules,
-    const vecmem::data::vector_view<unsigned short> f_view,
+    const cluster* id_clusters,
     const unsigned int start, const unsigned int end, const unsigned short cid,
     alt_measurement& out, vecmem::data::vector_view<unsigned int> cell_links,
     const unsigned int link);

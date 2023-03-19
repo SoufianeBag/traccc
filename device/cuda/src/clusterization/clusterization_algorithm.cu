@@ -333,7 +333,7 @@ __global__ void ccl_kernel(
     }
 }
 __global__ void ccl_kernel2(
-    const alt_cell_collection_types::const_view cells_view,
+
     const cell_module_collection_types::const_view modules_view,
     const CellsView cellsSoA, const unsigned short max_cells_per_partition,
     const unsigned short target_cells_per_partition,
@@ -343,16 +343,18 @@ __global__ void ccl_kernel2(
 
     const index_t tid = threadIdx.x;
     const index_t blckDim = blockDim.x;
-    const alt_cell_collection_types::const_device cells_device(cells_view);
-    // const CellsRefDevice cells(cellsSoA);
+    //const alt_cell_collection_types::const_device cells_device(cells_view);
+    //const CellsRefDevice cells_device(cellsSoA);
     //vecmem::device_vector<unsigned int> ch0(cellsSoA.channel0);
     //vecmem::device_vector<unsigned int> ch1(cellsSoA.channel1);
     //vecmem::device_vector<scalar> activation(cellsSoA.activation);
     //vecmem::device_vector<unsigned int> module_link(cellsSoA.module_link);
 
-    const traccc::CellsRefDevice cellsSoA_device(cellsSoA);
-    const unsigned int num_cells = cells_device.size();
+    const traccc::CellsRefDevice cells_device(cellsSoA);
+    const unsigned int num_cells = cellsSoA.size;
     __shared__ unsigned int start, end;
+    extern __shared__ cluster fathers[];
+    cluster* id_clusters = &fathers[0];
     /*
      * This variable will be used to write to the output later.
      */
@@ -379,10 +381,10 @@ __global__ void ccl_kernel2(
          * cells that have been claimed by the previous block (if any).
          */
         while (start != 0 &&
-               cells_device[start - 1].module_link ==
-                   cells_device[start].module_link &&
-               cells_device[start].c.channel1 <=
-                   cells_device[start - 1].c.channel1 + 1) {
+               cells_device.module_link[start - 1] ==
+                   cells_device.module_link[start] &&
+               cells_device.channel1[start] <=
+                   cells_device.channel1[start - 1] + 1) {
             ++start;
         }
 
@@ -392,10 +394,10 @@ __global__ void ccl_kernel2(
          * that is not a possible boundary!
          */
         while (end < num_cells &&
-               cells_device[end - 1].module_link ==
-                   cells_device[end].module_link &&
-               cells_device[end].c.channel1 <=
-                   cells_device[end - 1].c.channel1 + 1) {
+               cells_device.module_link[end - 1] ==
+                   cells_device.module_link[end] &&
+               cells_device.channel1[end] <=
+                   cells_device.channel1[end - 1] + 1) {
             ++end;
         }
     }
@@ -428,6 +430,15 @@ __global__ void ccl_kernel2(
      */
     // Number of adjacent cells
     unsigned char adjc[MAX_CELLS_PER_THREAD];
+    #pragma unroll
+     for (unsigned int tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
+        //adjc[tst] = 0;
+        id_clusters[cid].channel0 = cellsSoA_device.channel0[cid+start];
+        id_clusters[cid].channel1 = cellsSoA_device.channel1[cid+start];
+        id_clusters[cid].activation = cellsSoA_device.activation[cid+start];
+        id_clusters[cid].module_link = cellsSoA_device.module_link[cid+start];
+
+    }
 #pragma unroll
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         const index_t cid = tst * blckDim + tid;
@@ -439,8 +450,8 @@ __global__ void ccl_kernel2(
         /*
          * Look for adjacent cells to the current one.
          */
-        device::reduce_problem_cell2(cellsSoA_device, cid, start, end, adjc[tst],
-                                    adjv[tst]);
+        device::reduce_problem_cell2(cells_device, cid, start, end, adjc[tst],
+                                    adjv[tst],id_clusters);
         
     }
     /*
@@ -451,69 +462,41 @@ __global__ void ccl_kernel2(
      * shared memory is limited. These could always be moved to global memory,
      * but the algorithm would be decidedly slower in that case.
      */
-    extern __shared__ index_t shared_v[];
-    index_t* f = &shared_v[0];
-    
-
-#pragma unroll
-    for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
-        const index_t cid = tst * blckDim + tid;
-        /*
-         * At the start, the values of f and f_next should be equal to the
-         * ID of the cell.
-         */
-        f[cid] =  adjv[tst][8];
-        
-    }
-    /*
-     * Now that the data has initialized, we synchronize again before we
-     * move onto the actual processing part.
-     */
     __syncthreads();
-    /*
-     * Run FastSV algorithm, which will update the father index to that of the
-     * cell belonging to the same cluster with the lowest index.
-     */
-    //fast_sv_1(f, f_next, adjc, adjv, tid, blckDim);
-    {
-    bool gf_changed;
-    do {
+   bool gf_changed = false;
+      do {
         
-       
         gf_changed = false;
-
-        #pragma unroll
-        for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
-            const index_t cid = tst * blckDim + tid;
-            
-            
-                #pragma unroll
-                for (index_t i = 0; i < adjc[tst]; ++i){    // neighbors communication
-                if (f[cid] > f[adjv[tst][i]]) 
+              ///the father is the cell that has no small neighbors
+              for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; tst ++) {
+               // if my father is not a real father then i have to communicate with neighbors  tothe find the real fahter
+                  
+                for (index_t i = 0; i < adjc[tst]; i ++){    // neighbors communication
+                if (id_clusters[cid].id_cluster > id_clusters[adjv[tst][i]].id_cluster) 
                 {
-                    f[cid] = f[adjv[tst][i]];
+                    id_clusters[cid].id_cluster =  id_clusters[adjv[tst][i]].id_cluster;
                     gf_changed = true; 
                 }
                 
                 }
-            }
+
+       } 
+    }while (__syncthreads_or(gf_changed));
+    
             
-
-       } while (__syncthreads_or(gf_changed));
-
-    }
-
-    __syncthreads();
+    //printf("hello \n");
+    
+__syncthreads();
     /*
      * Count the number of clusters by checking how many cells have
      * themself assigned as a parent.
      */
 
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
-        if (f[cid] == cid) {
+        if (id_clusters[cid].id_cluster == cid) {
             atomicAdd(&outi, 1);
         }
-        //printf("f[cid] %u \n ", f[cid] );
+        //printf("id_clusters[cid] %u \n ", f[cid] );
     }
     __syncthreads();
     /*
@@ -538,17 +521,17 @@ __global__ void ccl_kernel2(
         outi = 0;
     }
     __syncthreads();
-    vecmem::data::vector_view<index_t> f_view(max_cells_per_partition, f);
+    //vecmem::data::vector_view<index_t> f_view(max_cells_per_partition, f);
     #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
-        if (f[cid] == cid) {
+        if (id_clusters[cid].id_cluster == cid) {
             /*
              * If we are a cluster owner, atomically claim a position in the
              * output array which we can write to.
              */
             const unsigned int id = atomicAdd(&outi, 1);
             device::aggregate_cluster2(
-                cellsSoA_device, modules_device, f_view, start, end, cid,
+                cells_device, modules_device, id_clusters, start, end, cid,
                 measurements_device[groupPos + id], cell_links, groupPos + id); 
         }
     }
@@ -687,8 +670,8 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
     // Launch ccl kernel. Each thread will handle a single cell.
     kernels::
         ccl_kernel2<<<num_partitions, threads_per_partition,
-                       max_cells_per_partition * sizeof(index_t), stream>>>(
-            cells, modules, cellsSoA, max_cells_per_partition,
+                       max_cells_per_partition * sizeof( cluster), stream>>>(
+             modules, cellsSoA, max_cells_per_partition,
             m_target_cells_per_partition, measurements_buffer,
             *num_measurements_device, cell_links);
     CUDA_ERROR_CHECK(cudaGetLastError());

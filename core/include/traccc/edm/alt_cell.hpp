@@ -49,7 +49,14 @@ struct CellsHost {
         module_link = uint_collection_types::host(s);
     }
 };
-
+struct cluster{
+    unsigned short id_cluster ;
+    channel_id channel0 = 0;
+    channel_id channel1 = 0;
+    scalar activation = 0.;
+    using link_type = cell_module_collection_types::view::size_type;
+    link_type module_link;
+};
 
 
 /// Declare all cell collection types
