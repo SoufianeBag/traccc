@@ -433,10 +433,10 @@ __global__ void ccl_kernel2(
     #pragma unroll
      for (unsigned int tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         //adjc[tst] = 0;
-        id_clusters[cid].channel0 = cellsSoA_device.channel0[cid+start];
-        id_clusters[cid].channel1 = cellsSoA_device.channel1[cid+start];
-        id_clusters[cid].activation = cellsSoA_device.activation[cid+start];
-        id_clusters[cid].module_link = cellsSoA_device.module_link[cid+start];
+        id_clusters[cid].channel0 = cells_device.channel0[cid+start];
+        id_clusters[cid].channel1 = cells_device.channel1[cid+start];
+        id_clusters[cid].activation = cells_device.activation[cid+start];
+        id_clusters[cid].module_link = cells_device.module_link[cid+start];
 
     }
 #pragma unroll
