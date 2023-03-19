@@ -551,6 +551,7 @@ __global__ void ccl_kernel2(
         __syncthreads();            
         // find minimum value in the warp          
         int warp_min = warpReduceMin(cell);
+        __syncthreads();
         // thread with lane id 0 writes the result to global memory
         if (tid % WARP_SIZE == 0 && warp_min != 9999 ) {
             minWho[tid/32] = warp_min;
