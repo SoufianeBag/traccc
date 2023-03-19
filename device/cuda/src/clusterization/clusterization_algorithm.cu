@@ -518,6 +518,7 @@ __global__ void ccl_kernel2(
 
     // Number of adjacent cells
     unsigned char adjc[MAX_CELLS_PER_THREAD];
+
     extern __shared__ index_t shared_v[];
     index_t* f = &shared_v[0];
     index_t* vsmem = &shared_v[max_cells_per_partition];
@@ -526,7 +527,7 @@ __global__ void ccl_kernel2(
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         const index_t cid = tst * blckDim + tid;
         adjc[tst] = 0;
-        maxAdj = cid ;
+        maxAdj = 0 ;
     }
 #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
