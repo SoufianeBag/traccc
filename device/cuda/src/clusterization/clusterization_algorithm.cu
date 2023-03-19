@@ -431,7 +431,7 @@ __global__ void ccl_kernel2(
      */
     // Number of adjacent cells
     unsigned char adjc[MAX_CELLS_PER_THREAD];
-    #pragma unroll
+    //#pragma unroll
      for (unsigned int tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         //adjc[tst] = 0;
         id_clusters[cid].channel0 = cells_device.channel0[cid+start];
@@ -446,12 +446,12 @@ __global__ void ccl_kernel2(
         adjc[tst] = 0;
         adjv[tst][8] = cid ;
     }*/
-#pragma unroll
+//#pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         /*
          * Look for adjacent cells to the current one.
          */
-        device::reduce_problem_cell2(cells_device, cid, start, end, adjc[tst],
+        device::reduce_problem_cell2( cid, start, end, adjc[tst],
                                     adjv[tst],id_clusters);
         
     }

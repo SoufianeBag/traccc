@@ -94,7 +94,6 @@ bool is_adjacent2(channel_id ac0, channel_id ac1, channel_id bc0,
 
 TRACCC_HOST_DEVICE
 inline void reduce_problem_cell2(
-    const CellsRefDevice& cellsSoA_device,
     const unsigned short cid, const unsigned int start, const unsigned int end,
     unsigned char& adjc, unsigned short adjv[8], cluster* id_clusters) {
 
@@ -112,14 +111,14 @@ inline void reduce_problem_cell2(
      * cell and working back to the first, collecting adjacent cells
      * along the way.
      */
-    for (unsigned int j = pos - 1; j < pos; --j) {
+    for (unsigned short j = cid - 1; j < cid ; --j) {
         /*
          * Since the data is sorted, we can assume that if we see a cell
          * sufficiently far away in both directions, it becomes
          * impossible for that cell to ever be adjacent to this one.
          * This is a small optimisation.
          */
-        if (id_clusters[j-start].channel1 + 1 < c1 || id_clusters[j-start].module_link != mod_id) {
+        if (id_clusters[j].channel1 + 1 < c1 || id_clusters[j].module_link != mod_id) {
             break;
         }
 
@@ -127,9 +126,9 @@ inline void reduce_problem_cell2(
          * If the cell examined is adjacent to the current cell, save it
          * in the current cell's adjacency set.
          */
-        if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
-            adjv[adjc++] = j - start;
-            if((j-start)< min_id) min_id = j-start;
+        if (is_adjacent2(c0, c1, id_clusters[j].channel0, id_clusters[j].channel1)) {
+            adjv[adjc++] = j ;
+            if(j< min_id) min_id = j-start;
         }
     }
 
@@ -137,20 +136,20 @@ inline void reduce_problem_cell2(
      * Now we examine all the cells past the current one, using almost
      * the same logic as in the backwards pass.
      */
-    #pragma unroll
-    for (unsigned int j = pos + 1; j < end; ++j) {
+   // #pragma unroll
+   for (unsigned int j = cid + 1; j + start < end; ++j) {
         /*
          * Note that this check now looks in the opposite direction! An
          * important difference.
          */
-        if (cellsSoA_device.channel1[j-start] > c1 + 1 || cellsSoA_device.module_link[j-start] != mod_id) {
+        if (id_clusters[j].channel1 > c1 + 1 || id_clusters[j].module_link != mod_id) {
             break;
         }
 
-        if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
-            adjv[adjc++] = j - start;
+        if (is_adjacent2(c0, c1, id_clusters[j].channel0, id_clusters[j].channel1)) {
+            adjv[adjc++] = j ;
            //printf(" j - start %u \n",j - start);
-           if((j)< min_id) min_id = j-start;
+           if((j)< min_id) min_id = j;
         }
     }
 id_clusters[cid].id_cluster = min_id;

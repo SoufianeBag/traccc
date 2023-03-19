@@ -149,9 +149,7 @@ inline void aggregate_cluster2(
             break;
         }
 
-        const unsigned int this_cell_ch0  = id_clusters[j].channel0;
-        const unsigned int this_cell_ch1  = id_clusters[j].channel1;
-        const scalar this_cell_activation  = id_clusters[j].activation;
+        
         
         /*
          * If the value of this cell is equal to our, that means it
@@ -160,17 +158,17 @@ inline void aggregate_cluster2(
          */
         if (id_clusters[j].id_cluster == cid) {
 
-            if (this_cell_ch1 > maxChannel1) {
-                maxChannel1 = this_cell_ch1;
+            if (id_clusters[j].channel1 > maxChannel1) {
+                maxChannel1 = id_clusters[j].channel1;
             }
             
             const float weight = traccc::detail::signal_cell_modelling(
-                this_cell_activation, this_module);
+                id_clusters[j].activation, this_module);
             //printf("weight %u \n" , weight);
             if (weight > this_module.threshold) {
-                totalWeight += this_cell_activation;
+                totalWeight += id_clusters[j].activation;
                 const point2 cell_position =
-                    traccc::detail::position_from_cell2(this_cell_ch0 , this_cell_ch1, this_module);
+                    traccc::detail::position_from_cell2(id_clusters[j].channel0 , id_clusters[j].channel1, this_module);
                 const point2 prev = mean;
                 const point2 diff = cell_position - prev;
 
@@ -188,7 +186,7 @@ inline void aggregate_cluster2(
          * Terminate the process earlier if we have reached a cell sufficiently
          * far away from the cluster in the dominant axis.
          */
-        if (this_cell_ch1 > maxChannel1 + 1) {
+        if (id_clusters[j].channel1 > maxChannel1 + 1) {
             break;
         }
     }
