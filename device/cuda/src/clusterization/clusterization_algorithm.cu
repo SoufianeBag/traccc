@@ -456,7 +456,7 @@ __global__ void ccl_kernel2(
     }
     __syncthreads();
 ​
-    /*for (unsigned int cid = end2 + tid;
+    for (unsigned int cid = end2 + tid;
          cid < num_cells; cid += blckDim) {
         if (cells_device[cid-1].module_link !=
                    cells_device[cid].module_link ||
