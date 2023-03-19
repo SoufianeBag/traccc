@@ -548,7 +548,7 @@ __syncthreads();
                    cells_device[end + cell_id - 1].c.channel1 + 1 ) {  // cells_device[end + cell_id].c.channel1 >cells_device[end + cell_id - 1].c.channel1 + 1 : so we garanty that there is no cell in the edge
                     cell = cell_id;
                     }  
-                     
+
         __syncthreads();            
         // find minimum value in the warp          
         int warp_min = warpReduceMin(cell);
