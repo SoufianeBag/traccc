@@ -18,10 +18,10 @@ bool is_adjacent(channel_id ac0, channel_id ac1, channel_id bc0,
 }
 
 TRACCC_HOST_DEVICE
-inline void reduce_problem_cell(
+inline void reduce_problem_cell2(
     const alt_cell_collection_types::const_device& cells,
     const unsigned short cid, const unsigned int start, const unsigned int end,
-    unsigned char& adjc, unsigned short adjv[8]) {
+    unsigned char& adjc, unsigned short adjv[9]) {
 
     const unsigned int pos = cid + start;
 
@@ -93,7 +93,7 @@ bool is_adjacent2(channel_id ac0, channel_id ac1, channel_id bc0,
 }
 
 TRACCC_HOST_DEVICE
-inline void reduce_problem_cell2(
+inline void reduce_problem_cell(
     const CellsRefDevice& cellsSoA_device,
     const unsigned short cid, const unsigned int start, const unsigned int end,
     unsigned char& adjc, unsigned short adjv[8]) {

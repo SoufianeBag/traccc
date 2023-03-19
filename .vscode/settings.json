@@ -18,6 +18,13 @@
         "xhash": "cpp",
         "xiosbase": "cpp",
         "xtree": "cpp",
-        "system_error": "cpp"
+        "system_error": "cpp",
+        "locale": "cpp",
+        "thread": "cpp",
+        "xlocale": "cpp",
+        "xlocmes": "cpp",
+        "xlocmon": "cpp",
+        "xlocnum": "cpp",
+        "xloctime": "cpp"
     }
 }
