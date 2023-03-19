@@ -114,12 +114,12 @@ inline void aggregate_cluster(
 TRACCC_DEVICE
 inline void aggregate_cluster2(
     const cell_module_collection_types::const_device& modules,
-     cluster* id_clusters,
+    const vecmem::data::vector_view<cluster> f_view,
     const unsigned int start, const unsigned int end, const unsigned short cid,
     alt_measurement& out, vecmem::data::vector_view<unsigned int> cell_links,
     const unsigned int link) {
 
-    //const vecmem::device_vector<unsigned short> f(f_view);
+    const vecmem::device_vector<cluster> id_clusters(f_view);
     vecmem::device_vector<unsigned int> cell_links_device(cell_links);
 
     /*
@@ -138,7 +138,7 @@ inline void aggregate_cluster2(
     #pragma unroll
     for (unsigned short j = cid; j < partition_size; j++) {
 
-        //assert(j < f.size());
+        assert(j < id_clusters.size());
 
         const unsigned int pos = j + start;
         /*
