@@ -552,7 +552,7 @@ __global__ void ccl_kernel2(
      * First, we traverse the cells backwards, starting from the current
      * cell and working back to the first, collecting adjacent cells
      * along the way.
-     */
+     */ 
     for (unsigned int j = pos - 1; j < pos; --j) {
         /*
          * Since the data is sorted, we can assume that if we see a cell
