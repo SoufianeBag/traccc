@@ -567,8 +567,8 @@ __global__ void ccl_kernel2(
          * in the current cell's adjacency set.
          */
         if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
-            vsmem[id + adjc ] = j - start;
-            adjc++;
+            vsmem[id + adjc[tst] ] = j - start;
+            adjc[tst]++;
             if ( maxAdj > j - start )  maxAdj = j - start ;
         }
     }
@@ -587,8 +587,8 @@ __global__ void ccl_kernel2(
         }
 
         if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
-            vsmem[id + adjc ] = j - start;
-            adjc++;
+            vsmem[id + adjc[tst] ] = j - start;
+            adjc[tst]++;
             if ( maxAdj > j - start )  maxAdj = j - start ;
            
         }
