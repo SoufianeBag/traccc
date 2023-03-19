@@ -41,7 +41,6 @@ inline void aggregate_cluster(
 
 TRACCC_DEVICE
 inline void aggregate_cluster2(
-    const CellsRefDevice& cellsSoA_device,
     const cell_module_collection_types::const_device& modules,
     cluster* id_clusters,
     const unsigned int start, const unsigned int end, const unsigned short cid,

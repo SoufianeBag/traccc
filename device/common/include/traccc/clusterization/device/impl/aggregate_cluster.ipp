@@ -113,7 +113,6 @@ inline void aggregate_cluster(
 
 TRACCC_DEVICE
 inline void aggregate_cluster2(
-     const CellsRefDevice& cellsSoA_device,
     const cell_module_collection_types::const_device& modules,
      cluster* id_clusters,
     const unsigned int start, const unsigned int end, const unsigned short cid,
@@ -131,7 +130,7 @@ inline void aggregate_cluster2(
      */
     scalar totalWeight = 0.;
     point2 mean{0., 0.}, var{0., 0.};
-    const unsigned int mod_link = cellsSoA_device.module_link[cid + start];
+    const unsigned int mod_link = id_clusters[cid].module_link;
     const cell_module this_module = modules.at(mod_link);
     const unsigned short partition_size = end - start;
 

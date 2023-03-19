@@ -358,7 +358,7 @@ __global__ void ccl_kernel2(
     /*
      * This variable will be used to write to the output later.
      */
-    __shared__ unsigned int outi;
+    __shared__ unsigned int outi, count;
     /*
      * First, we determine the exact range of cells that is to be examined by
      * this block of threads. We start from an initial range determined by the
@@ -374,6 +374,7 @@ __global__ void ccl_kernel2(
         assert(start < num_cells);
         end = std::min(num_cells, start + target_cells_per_partition);
         outi = 0;
+        count = 0;
 
         /*
          * Next, shift the starting point to a position further in the array;
@@ -421,7 +422,7 @@ __global__ void ccl_kernel2(
     alt_measurement_collection_types::device measurements_device(
         measurements_view);
     // Vector of indices of the adjacent cells
-    index_t adjv[MAX_CELLS_PER_THREAD][9];
+    index_t adjv[MAX_CELLS_PER_THREAD][8];
     /*
      * The number of adjacent cells for each cell must start at zero, to
      * avoid uninitialized memory. adjv does not need to be zeroed, as
@@ -439,12 +440,12 @@ __global__ void ccl_kernel2(
         id_clusters[cid].module_link = cells_device.module_link[cid+start];
 
     }
-#pragma unroll
+/*#pragma unroll
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         const index_t cid = tst * blckDim + tid;
         adjc[tst] = 0;
         adjv[tst][8] = cid ;
-    }
+    }*/
 #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         /*
@@ -508,19 +509,19 @@ __syncthreads();
      * amount of threads per block, this has no sever implications.
      */
     if (tid == 0) {
-        outi = atomicAdd(&measurement_count, outi);
+        count = atomicAdd(&measurement_count, outi);
         //printf("outi %u \n", outi);
     }
     __syncthreads();
     /*
      * Get the position to fill the measurements found in this thread group.
      */
-    const unsigned int groupPos = outi;
-    __syncthreads();
+    //const unsigned int groupPos = outi;
+   /* __syncthreads();
     if (tid == 0) {
         outi = 0;
     }
-    __syncthreads();
+    __syncthreads();*/
     //vecmem::data::vector_view<index_t> f_view(max_cells_per_partition, f);
     #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
@@ -529,10 +530,10 @@ __syncthreads();
              * If we are a cluster owner, atomically claim a position in the
              * output array which we can write to.
              */
-            const unsigned int id = atomicAdd(&outi, 1);
+            const unsigned int id = atomicAdd(&count, 1);
             device::aggregate_cluster2(
-                cells_device, modules_device, id_clusters, start, end, cid,
-                measurements_device[groupPos + id], cell_links, groupPos + id); 
+                modules_device, id_clusters, start, end, cid,
+                measurements_device[id], cell_links, id); 
         }
     }
 }
