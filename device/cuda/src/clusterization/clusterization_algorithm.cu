@@ -537,7 +537,7 @@ __global__ void ccl_kernel2(
    }
 __syncthreads();
     cell = 9999;
-    #pragma unroll  
+     
     for (index_t iter = 0; iter < 8; ++iter) {
         
         const index_t cell_id = iter * blckDim + tid;
@@ -556,7 +556,7 @@ __syncthreads();
         if (tid % WARP_SIZE == 0 && warp_min != 9999 ) {
             minWho[tid/32] = warp_min;
             printf("warp_min %u \n", warp_min);
-            flag[1] == 50;
+            flag[1] == 1;
             }
             __syncthreads();
             if (tid == 0 && flag[1] == 50 ) {
@@ -565,7 +565,7 @@ __syncthreads();
         
                    
         __syncthreads();   // obligatoire 
-        if (flag[1] == 50) break;   
+        if (flag[1] == 1) break;   
     }   
     
     }
