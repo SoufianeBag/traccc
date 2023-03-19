@@ -508,7 +508,7 @@ __global__ void ccl_kernel2(
         measurements_view);
     // Vector of indices of the adjacent cells
     //index_t adjv[MAX_CELLS_PER_THREAD][9];
-    index_t maxAdj ; 
+    index_t maxAdj[MAX_CELLS_PER_THREAD] ; 
     /*
      * The number of adjacent cells for each cell must start at zero, to
      * avoid uninitialized memory. adjv does not need to be zeroed, as
@@ -570,7 +570,7 @@ __global__ void ccl_kernel2(
         if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
             vsmem[id + adjc[tst] ] = j - start;
             adjc[tst]++;
-            if ( maxAdj > j - start )  maxAdj = j - start ;
+            if ( maxAdj[tst] > j - start )  maxAdj[tst] = j - start ;
         }
     }
 
@@ -590,7 +590,7 @@ __global__ void ccl_kernel2(
         if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
             vsmem[id + adjc[tst] ] = j - start;
             adjc[tst]++;
-            if ( maxAdj > j - start )  maxAdj = j - start ;
+            if ( maxAdj[tst] > j - start )  maxAdj[tst] = j - start ;
            
         }
     }
@@ -617,7 +617,7 @@ __global__ void ccl_kernel2(
          * At the start, the values of f and f_next should be equal to the
          * ID of the cell.
          */
-        f[cid] =  maxAdj;
+        f[cid] =  maxAdj[tst];
         
     }
     /*
