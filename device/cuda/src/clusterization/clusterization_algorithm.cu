@@ -553,7 +553,7 @@ __global__ void ccl_kernel2(
         int warp_min = warpReduceMin(cell);
         // thread with lane id 0 writes the result to global memory
         if (tid % WARP_SIZE == 0 && warp_min != 9999 ) {
-            minWho[tid/32] = cell;
+            minWho[tid/32] = warp_min;
             flag[1] == 1;
             }
             __syncthreads();
