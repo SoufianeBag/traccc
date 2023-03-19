@@ -455,14 +455,7 @@ __global__ void ccl_kernel2(
                                     adjv[tst],id_clusters);
         
     }
-    /*
-     * These arrays are the meat of the pudding of this algorithm, and we
-     * will constantly be writing and reading from them which is why we
-     * declare them to be in the fast shared memory. Note that this places a
-     * limit on the maximum contiguous activations per module, as the amount of
-     * shared memory is limited. These could always be moved to global memory,
-     * but the algorithm would be decidedly slower in that case.
-     */
+    
     __syncthreads();
    bool gf_changed = false;
       do {
