@@ -499,6 +499,7 @@ __global__ void ccl_kernel2(
         measurements_view);
     // Vector of indices of the adjacent cells
     index_t adjv[MAX_CELLS_PER_THREAD][9];
+    index_t maxAdj ; 
     /*
      * The number of adjacent cells for each cell must start at zero, to
      * avoid uninitialized memory. adjv does not need to be zeroed, as
@@ -832,7 +833,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
     // Launch ccl kernel. Each thread will handle a single cell.
     kernels::
         ccl_kernel2<<<num_partitions, threads_per_partition,
-                       max_cells_per_partition * sizeof(index_t), stream>>>(
+                       9 * max_cells_per_partition * sizeof(index_t), stream>>>(
             cells, modules, cellsSoA, max_cells_per_partition,
             m_target_cells_per_partition, measurements_buffer,
             *num_measurements_device, cell_links);
