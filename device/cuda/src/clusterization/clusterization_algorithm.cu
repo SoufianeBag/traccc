@@ -448,13 +448,13 @@ __global__ void ccl_kernel2(
          * current block to ensure that we do not end our partition on a cell
          * that is not a possible boundary!
          */
-        while (end < num_cells &&
+        /*while (end < num_cells &&
                cells_device[end - 1].module_link ==
                    cells_device[end].module_link &&
                cells_device[end].c.channel1 <=
                    cells_device[end - 1].c.channel1 + 1) {
             ++end;
-        } 
+        } */
           minWho[0] = 9999;
           minWho[1] = 9999;
           minWho[2] = 9999;
@@ -515,7 +515,7 @@ __global__ void ccl_kernel2(
         __syncthreads();        
         int warp_min = warpReduceMin(cell);
         //printf("warp_min %u \n", warp_min );
-        __syncthreads();  
+        __syncthreads();   /// entre les warps
         // thread with lane id 0 writes the result 
         if (tid % WARP_SIZE == 0 && warp_min != 9999) {
             minWho[tid/32] = warp_min;
@@ -524,7 +524,10 @@ __global__ void ccl_kernel2(
         __syncthreads();
         if (tid == 0 && flag[0] == 1 ) {
                 start = std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3] })  + start   ;
-                //printf("min %u blockIdx.x %u \n" , start , blockIdx.x);
+                minWho[0] = 9999;
+                minWho[1] = 9999;
+                minWho[2] = 9999;
+                minWho[3] = 9999;
                 }
         __syncthreads();
         if (flag[0] == 1 ) break;
@@ -533,7 +536,7 @@ __global__ void ccl_kernel2(
     }
    }
 
-    /*cell = 999;
+    cell = 999;
     #pragma unroll  
     for (index_t iter = 0; iter < 8; ++iter) {
         
@@ -544,25 +547,24 @@ __global__ void ccl_kernel2(
                    cells_device[end + cell_id].c.channel1 >
                    cells_device[end + cell_id - 1].c.channel1 + 1 ) {  // cells_device[end + cell_id].c.channel1 >cells_device[end + cell_id - 1].c.channel1 + 1 : so we garanty that there is no cell in the edge
                     cell = cell_id;
-                    } */ /// if : end >= num_cells , the value of "end" will not change 
-        //__syncthreads();            
+                    }   
+        __syncthreads();            
         // find minimum value in the warp          
-        //int warp_min = warpReduceMin(cell);
+        int warp_min = warpReduceMin(cell);
         // thread with lane id 0 writes the result to global memory
-        //if (tid % WARP_SIZE == 0 /*&& warp_min != 999 */) {
-           /* minWho[tid/32] = cell;
+        if (tid % WARP_SIZE == 0 && warp_min != 9999 ) {
+            minWho[tid/32] = cell;
+            flag[1] == 1
             }
             __syncthreads();
-            if (tid == 0 ) {
+            if (tid == 0 && flag[1] == 1 ) {
                 end = std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3]} ) + end ;
-                //printf("end %u \n", end);
-                flag[0] = 1 ; 
                 }
         
                    
         __syncthreads();   // obligatoire 
         if (flag[1] == 1) break;   
-    }  */  
+    }   
     
 
     __syncthreads();
