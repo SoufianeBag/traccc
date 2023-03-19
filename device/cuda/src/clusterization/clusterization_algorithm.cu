@@ -53,17 +53,6 @@ namespace kernels {
 /// @param[in] adjv     Vector of adjacent cells
 /// @param[in] tid      The thread index
 ///
-
-__device__ int warpReduceMin(int val)
-{
-    for (int offset = warpSize / 2; offset > 0; offset /= 2) {
-        val = min(val, __shfl_down_sync(0xffffffff, val, offset));
-       // __syncwarp();
-    }
-    return val;
-}
-
-
 __device__ void fast_sv_1(index_t* f, index_t* gf,
                           unsigned char adjc[MAX_CELLS_PER_THREAD],
                           index_t adjv[MAX_CELLS_PER_THREAD][8], index_t tid,
@@ -368,8 +357,6 @@ __global__ void ccl_kernel2(
      * This variable will be used to write to the output later.
      */
     __shared__ unsigned int outi;
-     __shared__ int short minWho[4];
-
     /*
      * First, we determine the exact range of cells that is to be examined by
      * this block of threads. We start from an initial range determined by the
@@ -416,7 +403,7 @@ __global__ void ccl_kernel2(
          * Initialize shared variables.
          */
         //start = blockIdx.x * target_cells_per_partition;
-        /*if (blockIdx.x == 0) {
+        if (blockIdx.x == 0) {
             start = 0;
         }
         else {
@@ -425,7 +412,7 @@ __global__ void ccl_kernel2(
         assert(start < num_cells);
         end = num_cells;
         //end2 = std::min(num_cells, start + target_cells_per_partition);
-        outi = 0; */
+        outi = 0;
 
         /*
          * Next, shift the starting point to a position further in the array;
@@ -439,33 +426,23 @@ __global__ void ccl_kernel2(
                    cells_device[start - 1].c.channel1 + 1) {
             ++start;
         }*/
-        start = blockIdx.x * target_cells_per_partition;
-        assert(start < num_cells);
-        end = std::min(num_cells, start + target_cells_per_partition);
-        outi = 0;
+
         /*
          * Then, claim as many cells as we need past the naive end of the
          * current block to ensure that we do not end our partition on a cell
          * that is not a possible boundary!
          */
-        /*while (end < num_cells &&
+       /* while (end < num_cells &&
                cells_device[end - 1].module_link ==
                    cells_device[end].module_link &&
                cells_device[end].c.channel1 <=
                    cells_device[end - 1].c.channel1 + 1) {
             ++end;
         } */
-          minWho[0] = 9999;
-          minWho[1] = 9999;
-          minWho[2] = 9999;
-          minWho[3] = 9999;
-          
-
-        
     }
     __syncthreads();
 
-    /*if (blockIdx.x != 0)
+    if (blockIdx.x != 0)
     for (unsigned int cid = target_cells_per_partition * blockIdx.x + tid;
          cid < end; cid += blckDim) {
         if ((cells_device[cid-1].module_link !=
@@ -490,89 +467,20 @@ __global__ void ccl_kernel2(
     }
     
 
-    */  //////////////////////////// old 2 
-
-    /*
-    locating the start and the end of the partition
-    */
-   {
-   __shared__ short flag[2];  
-   unsigned int short cell = 9999; 
-   
-      
-    for (index_t iter = 0; iter < 8; ++iter) {
-         
-        const index_t cell_id = iter * blckDim + tid;  
-        if ( start == 0 ) break;  /// no diverges because all threads of blocs 0 will break 
-        if ( cells_device[start + cell_id - 1].module_link !=
-                cells_device[start + cell_id].module_link ||
-                cells_device[start + cell_id].c.channel1 >
-                cells_device[start + cell_id - 1].c.channel1 + 1 ) {
-                      cell = cell_id;
-                    }
-
-        // find minimum value in the warp  
-        __syncthreads();        
-        int warp_min = warpReduceMin(cell);
-        //printf("warp_min %u \n", warp_min );
-        __syncthreads();   /// entre les warps
-        // thread with lane id 0 writes the result 
-        if (tid % WARP_SIZE == 0 && warp_min != 9999) {
-            minWho[tid/32] = warp_min;
-            flag[0] = 1 ;
-            }
-        __syncthreads();
-        if (tid == 0 && flag[0] == 1 ) {
-                start = std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3] })  + start   ;
-                minWho[0] = 9999;
-                minWho[1] = 9999;
-                minWho[2] = 9999;
-                minWho[3] = 9999;
-                }
-        __syncthreads();
-        if (flag[0] == 1 ) break;
-  
-        
-    
-   }
-__syncthreads();
-    cell = 9999;
-     
-    for (index_t iter = 0; iter < 8; ++iter) {
-        
-        const index_t cell_id = iter * blckDim + tid;
-        
-        if ( end < num_cells && cells_device[end + cell_id - 1].module_link !=
-                   cells_device[end + cell_id].module_link  ||
-                   cells_device[end + cell_id].c.channel1 >
-                   cells_device[end + cell_id - 1].c.channel1 + 1 ) {  // cells_device[end + cell_id].c.channel1 >cells_device[end + cell_id - 1].c.channel1 + 1 : so we garanty that there is no cell in the edge
-                    cell = cell_id;
-                    }  
-
-        __syncthreads();            
-        // find minimum value in the warp          
-        int warp_min = warpReduceMin(cell);
-        __syncthreads();
-        // thread with lane id 0 writes the result to global memory
-        if (tid % WARP_SIZE == 0 && warp_min != 9999 ) {
-            minWho[tid/32] = warp_min;
-            //printf("warp_min %u \n", warp_min);
-            flag[1] == 1;
-            }
-            __syncthreads();
-            if (tid == 0 && flag[1] == 1 ) {
-                end = std::min({minWho[0] , minWho[1]  , minWho[2], minWho[3]} ) + end ;
-                }
-        
-                   
-        __syncthreads();   // obligatoire 
-        if (flag[1] == 1) break;   
-    }   
-    
+    /*if (start != start2) {
+        printf("th %u start %u start2 %u\n",
+            target_cells_per_partition * blockIdx.x + tid,
+            start, start2);
     }
+    if (end != end2) {
+        printf("th %u end %u end2 %u\n",
+            target_cells_per_partition * blockIdx.x + tid,
+            end, end2);
+    }*/
+
     __syncthreads();
     const index_t size = end - start;
-   //printf("size %hu \n", size);
+    //printf("size %hu \n", size);
     assert(size <= max_cells_per_partition);
     /*for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
         //printf("blck %u th %u ch0 %u\n", blockIdx.x, tid, ch0[tst]);
@@ -858,7 +766,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
     // Launch ccl kernel. Each thread will handle a single cell.
     kernels::
         ccl_kernel2<<<num_partitions, threads_per_partition,
-                       max_cells_per_partition * sizeof(index_t) + 4 * sizeof(index_t), stream>>>(
+                       9 * max_cells_per_partition * sizeof(index_t), stream>>>(
             cells, modules, cellsSoA, max_cells_per_partition,
             m_target_cells_per_partition, measurements_buffer,
             *num_measurements_device, cell_links);
