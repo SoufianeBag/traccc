@@ -660,7 +660,7 @@ __global__ void ccl_kernel2(
 
     }
 
-    __syncthreads();
+    //__syncthreads();
     /*
      * Count the number of clusters by checking how many cells have
      * themself assigned as a parent.
