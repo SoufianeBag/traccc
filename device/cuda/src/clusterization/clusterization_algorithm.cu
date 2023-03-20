@@ -507,7 +507,7 @@ __global__ void ccl_kernel2(
         measurements_view);
     // Vector of indices of the adjacent cells
     //index_t adjv[MAX_CELLS_PER_THREAD][9];
-    index_t maxAdj[MAX_CELLS_PER_THREAD] ; 
+    //index_t maxAdj[MAX_CELLS_PER_THREAD] ; 
     /*
      * The number of adjacent cells for each cell must start at zero, to
      * avoid uninitialized memory. adjv does not need to be zeroed, as
@@ -526,12 +526,13 @@ __global__ void ccl_kernel2(
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         const index_t cid = tst * blckDim + tid;
         adjc[tst] = 0;
-        maxAdj[tst] = cid ;
+        f[cid] = cid ;
     }
 #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         
-         index_t id = tst*8 + tid*8*MAX_CELLS_PER_THREAD;
+         const index_t id = tst*8 + tid*8*MAX_CELLS_PER_THREAD;
+         
          
         /* 
          * Look for adjacent cells to the current one.
@@ -570,7 +571,7 @@ __global__ void ccl_kernel2(
         if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
             vsmem[id + adjc[tst] ] = j - start;
             adjc[tst]++;
-            if ( maxAdj[tst] > j - start )  maxAdj[tst] = j - start ;
+            if ( f[cid] > j - start )  f[cid] = j - start ;
         }
     }
 
@@ -590,7 +591,7 @@ __global__ void ccl_kernel2(
         if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
             vsmem[id + adjc[tst] ] = j - start;
             adjc[tst]++;
-            if ( maxAdj[tst] > j - start )  maxAdj[tst] = j - start ;
+            if ( f[cid] > j - start )  f[cid] = j - start ;
            
         }
     }
@@ -610,16 +611,16 @@ __global__ void ccl_kernel2(
     index_t* vsmem = &shared_v[max_cells_per_partition]; */
     
 
-#pragma unroll
+/*#pragma unroll
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         const index_t cid = tst * blckDim + tid;
         /*
          * At the start, the values of f and f_next should be equal to the
          * ID of the cell.
          */
-        f[cid] =  maxAdj[tst];
+        //f[cid] =  maxAdj[tst];
         
-    }
+    //} 
     /*
      * Now that the data has initialized, we synchronize again before we
      * move onto the actual processing part.
@@ -694,7 +695,7 @@ __global__ void ccl_kernel2(
         outi = 0;
     }
     __syncthreads();
-    vecmem::data::vector_view<index_t> f_view(max_cells_per_partition, f);
+    vecmem::data::vector_view<index_t> f_view(max_cells_per_partition, f);   //// it's a view so it will access to f.data , if the constuctor is well optimize  
     #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         if (f[cid] == cid) {
