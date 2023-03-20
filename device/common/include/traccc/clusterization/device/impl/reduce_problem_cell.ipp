@@ -105,7 +105,7 @@ inline void reduce_problem_cell2(
     const channel_id c1 = id_clusters[cid].channel1;
     const unsigned int mod_id = id_clusters[cid].module_link;
     unsigned short min_id = cid;
-    adjc = 0;
+    
     /*
      * First, we traverse the cells backwards, starting from the current
      * cell and working back to the first, collecting adjacent cells
@@ -127,7 +127,8 @@ inline void reduce_problem_cell2(
          * in the current cell's adjacency set.
          */
         if (is_adjacent2(c0, c1, id_clusters[j].channel0, id_clusters[j].channel1)) {
-            adjv[adjc++] = j ;
+            adjv[adjc] = j ;
+            adjc++;
             if(j< min_id) min_id = j-start;
         }
     }
@@ -147,7 +148,8 @@ inline void reduce_problem_cell2(
         }
 
         if (is_adjacent2(c0, c1, id_clusters[j].channel0, id_clusters[j].channel1)) {
-            adjv[adjc++] = j ;
+            adjv[adjc] = j ;
+            adjc++;
            //printf(" j - start %u \n",j - start);
            if((j)< min_id) min_id = j;
         }
