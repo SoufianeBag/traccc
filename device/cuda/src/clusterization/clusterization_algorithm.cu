@@ -651,8 +651,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
     alt_measurement_collection_types::buffer measurements_buffer(num_cells,
                                                                  m_mr.main);
                                                                  
-    spacepoint_collection_types::buffer spacepoints_buffer(
-        0.3*num_cells, m_mr.main);
+    
     // Counter for number of measurements
     vecmem::unique_alloc_ptr<unsigned int> num_measurements_device =
         vecmem::make_unique_alloc<unsigned int>(m_mr.main);
@@ -668,8 +667,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
     const unsigned int num_partitions =
         (num_cells + m_target_cells_per_partition - 1) /
         m_target_cells_per_partition;
-    alt_measurement_collection_types::buffer measurements_buffer(num_cells,
-                                                                 m_mr.main);
+    
     // Create buffer for linking cells to their spacepoints.
     vecmem::data::vector_buffer<unsigned int> cell_links(num_cells, m_mr.main);
     // Launch ccl kernel. Each thread will handle a single cell.
