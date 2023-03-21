@@ -209,7 +209,7 @@ inline void aggregate_cluster2(
      point3 local_3d = {mean[0], mean[1], 0.};
     point3 global = this_module.placement.point_to_global(local_3d);
     //spacepoint[link].global = global;
-    spacepoint[link] = {global,{mean, var, 0}};
+    spacepoints[link] = {global,{mean, var, 0}};
     // Fill the result object with this spacepoint
    // spacepoints_device[globalIndex] = {global, {mean, var, 0}};
 }
