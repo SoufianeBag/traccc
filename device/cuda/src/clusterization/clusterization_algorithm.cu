@@ -440,6 +440,8 @@ __global__ void ccl_kernel2(
         id_clusters[cid].module_link = cells_device.module_link[cid+start];
 
     }
+    __syncthreads();
+
 /*#pragma unroll
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         const index_t cid = tst * blckDim + tid;
@@ -458,23 +460,22 @@ __global__ void ccl_kernel2(
     
     __syncthreads();
    bool gf_changed = false;
-      do {
+    do {
         
         gf_changed = false;
-              ///the father is the cell that has no small neighbors
-              for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; tst ++) {
+        ///the father is the cell that has no small neighbors
+        for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; tst ++) {
                // if my father is not a real father then i have to communicate with neighbors  tothe find the real fahter
                   
-                for (index_t i = 0; i < adjc[tst]; i ++){    // neighbors communication
+            for (index_t i = 0; i < adjc[tst]; i ++){    // neighbors communication
                 if (id_clusters[cid].id_cluster > id_clusters[adjv[tst][i]].id_cluster) 
                 {
                     id_clusters[cid].id_cluster =  id_clusters[adjv[tst][i]].id_cluster;
                     gf_changed = true; 
                 }
                 
-                }
-
-       } 
+            }
+        } 
     }while (__syncthreads_or(gf_changed));
     
             

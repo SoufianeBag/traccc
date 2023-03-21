@@ -118,6 +118,7 @@ inline void reduce_problem_cell2(
          * impossible for that cell to ever be adjacent to this one.
          * This is a small optimisation.
          */
+        assert(j>= 0);
         if (id_clusters[j].channel1 + 1 < c1 || id_clusters[j].module_link != mod_id) {
             break;
         }
@@ -127,8 +128,8 @@ inline void reduce_problem_cell2(
          * in the current cell's adjacency set.
          */
         if (is_adjacent2(c0, c1, id_clusters[j].channel0, id_clusters[j].channel1)) {
-            adjv[adjc] = j ;
-            adjc++;
+            adjv[adjc ++] = j ;
+            
             if(j< min_id) min_id = j-start;
         }
     }
