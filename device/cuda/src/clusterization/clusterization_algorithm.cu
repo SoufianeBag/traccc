@@ -449,10 +449,10 @@ __global__ void ccl_kernel2(
         adjv[tst][8] = cid ;
     }*/
 //#pragma unroll
-#pragma unroll
+/*#pragma unroll
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         adjc[tst] = 0;
-    }
+    }*/
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         /*
          * Look for adjacent cells to the current one.
