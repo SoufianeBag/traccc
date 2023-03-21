@@ -116,7 +116,7 @@ inline void aggregate_cluster2(
     const cell_module_collection_types::const_device& modules,
     /*const vecmem::data::vector_view<cluster> f_view,*/cluster* id_clusters,
     const unsigned int start, const unsigned int end, const unsigned short cid,
-    spacepoint_collection_types::device& spacepoints, vecmem::data::vector_view<unsigned int> cell_links,
+    spacepoint_collection_types::device spacepoints, vecmem::data::vector_view<unsigned int> cell_links,
     const unsigned int link) {
 
     //const vecmem::device_vector<cluster> id_clusters(f_view);
