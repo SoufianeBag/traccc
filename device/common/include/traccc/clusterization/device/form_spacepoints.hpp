@@ -40,7 +40,7 @@ inline void form_spacepoints(
     alt_measurement_collection_types::const_view measurements_view,
     cell_module_collection_types::const_view modules_view,
     const unsigned int measurement_count,
-    spacepoint_collection_types::view spacepoints_view);
+    spacepoint_collection_types::device& spacepoints);
 
 }  // namespace traccc::device
 
