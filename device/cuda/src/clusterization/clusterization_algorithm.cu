@@ -520,7 +520,7 @@ __syncthreads();
         outi = 0;
     }
     __syncthreads();
-    vecmem::data::vector_view<cluster> f_view(max_cells_per_partition, id_clusters);
+    //vecmem::data::vector_view<cluster> f_view(max_cells_per_partition, id_clusters);
     #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         if (id_clusters[cid].id_cluster == cid) {
@@ -530,7 +530,7 @@ __syncthreads();
              */
             const unsigned int id = atomicAdd(&outi, 1);
             device::aggregate_cluster2(
-                modules_device, f_view, start, end, cid,
+                modules_device, id_clusters, start, end, cid,
                  spacepoints_device[groupPos+id], cell_links, groupPos+id); 
         }
     }

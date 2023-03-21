@@ -114,12 +114,12 @@ inline void aggregate_cluster(
 TRACCC_DEVICE
 inline void aggregate_cluster2(
     const cell_module_collection_types::const_device& modules,
-    const vecmem::data::vector_view<cluster> f_view,
+    /*const vecmem::data::vector_view<cluster> f_view,*/cluster* id_clusters,
     const unsigned int start, const unsigned int end, const unsigned short cid,
-    spacepoint& out, vecmem::data::vector_view<unsigned int> cell_links,
+    spacepoint_collection_types::device spacepoints, vecmem::data::vector_view<unsigned int> cell_links,
     const unsigned int link) {
 
-    const vecmem::device_vector<cluster> id_clusters(f_view);
+    //const vecmem::device_vector<cluster> id_clusters(f_view);
     vecmem::device_vector<unsigned int> cell_links_device(cell_links);
 
     /*
@@ -138,8 +138,8 @@ inline void aggregate_cluster2(
     #pragma unroll
     for (unsigned short j = cid; j < partition_size; j++) {
 
-        assert(j < id_clusters.size());
-
+        
+        assert(j < max_cells_per_partition);
         const unsigned int pos = j + start;
         /*
          * Terminate the process earlier if we have reached a cell sufficiently
@@ -206,8 +206,8 @@ inline void aggregate_cluster2(
     //printf(" mean[0] %u , mean[1] %u \n " , mean[0] ,  mean[1] );
      point3 local_3d = {mean[0], mean[1], 0.};
     point3 global = this_module.placement.point_to_global(local_3d);
-    out.global = global;
-    out.meas = {mean, var, 0};
+    spacepoint[link].global = global;
+    spacepoint[link].meas = {mean, var, 0};
     // Fill the result object with this spacepoint
    // spacepoints_device[globalIndex] = {global, {mean, var, 0}};
 }
