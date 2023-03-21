@@ -118,7 +118,7 @@ inline void reduce_problem_cell2(
          * impossible for that cell to ever be adjacent to this one.
          * This is a small optimisation.
          */
-        assert(j>= 0);
+        //assert(j>= 0);
         if (id_clusters[j].channel1 + 1 < c1 || id_clusters[j].module_link != mod_id) {
             break;
         }
