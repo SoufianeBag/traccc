@@ -135,11 +135,11 @@ inline void aggregate_cluster2(
     const unsigned short partition_size = end - start;
 
     channel_id maxChannel1 = std::numeric_limits<channel_id>::min();
-    #pragma unroll
+    //#pragma unroll
     for (unsigned short j = cid; j < partition_size; j++) {
 
         
-        assert(j < max_cells_per_partition);
+        assert(j < id_clusters.size() );
         const unsigned int pos = j + start;
         /*
          * Terminate the process earlier if we have reached a cell sufficiently
@@ -149,7 +149,9 @@ inline void aggregate_cluster2(
             break;
         }
 
-        
+        const unsigned int this_cell_ch0  = id_clusters[j].channel0;
+        const unsigned int this_cell_ch1  = id_clusters[j].channel1;
+        const scalar this_cell_activation  = id_clusters[j].activation;
         
         /*
          * If the value of this cell is equal to our, that means it
@@ -158,17 +160,17 @@ inline void aggregate_cluster2(
          */
         if (id_clusters[j].id_cluster == cid) {
 
-            if (id_clusters[j].channel1 > maxChannel1) {
-                maxChannel1 = id_clusters[j].channel1;
+            if (this_cell_ch1 > maxChannel1) {
+                maxChannel1 = this_cell_ch1;
             }
             
             const float weight = traccc::detail::signal_cell_modelling(
-                id_clusters[j].activation, this_module);
+                this_cell_activation, this_module);
             //printf("weight %u \n" , weight);
             if (weight > this_module.threshold) {
-                totalWeight += id_clusters[j].activation;
+                totalWeight += this_cell_activation;
                 const point2 cell_position =
-                    traccc::detail::position_from_cell2(id_clusters[j].channel0 , id_clusters[j].channel1, this_module);
+                    traccc::detail::position_from_cell2(this_cell_ch0 , this_cell_ch1, this_module);
                 const point2 prev = mean;
                 const point2 diff = cell_position - prev;
 
@@ -186,7 +188,7 @@ inline void aggregate_cluster2(
          * Terminate the process earlier if we have reached a cell sufficiently
          * far away from the cluster in the dominant axis.
          */
-        if (id_clusters[j].channel1 > maxChannel1 + 1) {
+        if (this_cell_ch1 > maxChannel1 + 1) {
             break;
         }
     }
