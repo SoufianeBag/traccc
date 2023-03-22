@@ -565,10 +565,9 @@ clusterization_algorithm::output_type clusterization_algorithm::operator()(
         m_copy.get_size(cells);
 
     // Create result object for the CCL kernel with size overestimation
-   /* alt_measurement_collection_types::buffer measurements_buffer(num_cells,
-                                                                 m_mr.main);*/
-    spacepoint_collection_types::buffer spacepoints_buffer(
-        0.3*num_cells, m_mr.main);
+    alt_measurement_collection_types::buffer measurements_buffer(num_cells,
+                                                                 m_mr.main);
+
     // Counter for number of measurements
     vecmem::unique_alloc_ptr<unsigned int> num_measurements_device =
         vecmem::make_unique_alloc<unsigned int>(m_mr.main);
@@ -594,20 +593,20 @@ clusterization_algorithm::output_type clusterization_algorithm::operator()(
         ccl_kernel<<<num_partitions, threads_per_partition,
                      2 * max_cells_per_partition * sizeof(index_t), stream>>>(
             cells, modules, max_cells_per_partition,
-            m_target_cells_per_partition, spacepoints_buffer,
+            m_target_cells_per_partition, measurements_buffer,
             *num_measurements_device, cell_links);
 
     CUDA_ERROR_CHECK(cudaGetLastError());
 
     // Copy number of measurements to host
-   /* vecmem::unique_alloc_ptr<unsigned int> num_measurements_host =
+    vecmem::unique_alloc_ptr<unsigned int> num_measurements_host =
         vecmem::make_unique_alloc<unsigned int>(*(m_mr.host));
     CUDA_ERROR_CHECK(cudaMemcpyAsync(
         num_measurements_host.get(), num_measurements_device.get(),
-        sizeof(unsigned int), cudaMemcpyDeviceToHost, stream));*/
+        sizeof(unsigned int), cudaMemcpyDeviceToHost, stream));
     m_stream.synchronize();
 
-   /* spacepoint_collection_types::buffer spacepoints_buffer(
+    spacepoint_collection_types::buffer spacepoints_buffer(
         *num_measurements_host, m_mr.main);
 
     // For the following kernel, we can now use whatever the desired number of
@@ -624,7 +623,7 @@ clusterization_algorithm::output_type clusterization_algorithm::operator()(
 
     CUDA_ERROR_CHECK(cudaGetLastError());
     m_stream.synchronize();
-*/
+
     return {std::move(spacepoints_buffer), std::move(cell_links)};
 }
 clusterization_algorithm2::clusterization_algorithm2(
@@ -644,10 +643,11 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
     const alt_cell_collection_types::view::size_type num_cells =
         m_copy.get_size(cells);
     // Create result object for the CCL kernel with size overestimation
-    alt_measurement_collection_types::buffer measurements_buffer(num_cells,
-                                                                 m_mr.main);
+    /*alt_measurement_collection_types::buffer measurements_buffer(num_cells,
+                                                                 m_mr.main);*/
                                                                  
-    
+     spacepoint_collection_types::buffer spacepoints_buffer(
+        0.3*num_cells, m_mr.main);
     // Counter for number of measurements
     vecmem::unique_alloc_ptr<unsigned int> num_measurements_device =
         vecmem::make_unique_alloc<unsigned int>(m_mr.main);
@@ -671,12 +671,12 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
         ccl_kernel2<<<num_partitions, threads_per_partition,
                        max_cells_per_partition * sizeof( cluster), stream>>>(
              modules, cellsSoA, max_cells_per_partition,
-            m_target_cells_per_partition, /*spacepoints_buffer*/measurements_buffer,
+            m_target_cells_per_partition,spacepoints_buffer /*measurements_buffer*/,
             *num_measurements_device, cell_links);
     CUDA_ERROR_CHECK(cudaGetLastError());
     m_stream.synchronize();
     // Copy number of measurements to host
-    vecmem::unique_alloc_ptr<unsigned int> num_measurements_host =
+   /* vecmem::unique_alloc_ptr<unsigned int> num_measurements_host =
         vecmem::make_unique_alloc<unsigned int>(*(m_mr.host));
     CUDA_ERROR_CHECK(cudaMemcpyAsync(
         num_measurements_host.get(), num_measurements_device.get(),
@@ -695,7 +695,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
         measurements_buffer, modules, *num_measurements_host,
         spacepoints_buffer);
     CUDA_ERROR_CHECK(cudaGetLastError());
-    m_stream.synchronize();
+    m_stream.synchronize();*/
     return {std::move(spacepoints_buffer), std::move(cell_links)};
 }
 }  // namespace traccc::cuda
