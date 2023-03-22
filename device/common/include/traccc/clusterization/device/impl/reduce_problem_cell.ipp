@@ -130,7 +130,7 @@ inline void reduce_problem_cell2(
         if (is_adjacent(c0, c1, id_clusters[j].channel0, id_clusters[j].channel1)) {
             adjv[adjc ++] = j ;
             
-            if(j< min_id) min_id = j-start;
+            if(j< min_id) min_id = j;
         }
     }
 
