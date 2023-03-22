@@ -166,6 +166,7 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
                 spacepoints_cuda_buffer =
                     ca_cuda(cells_buffer, modules_buffer , cellsSoA).first;
                 stream.synchronize();
+                printf("num measur : %u \n",ca_cuda(cells_buffer, modules_buffer , cellsSoA).second);
             }  // stop measuring clusterization cuda timer
 
             if (run_cpu) {
