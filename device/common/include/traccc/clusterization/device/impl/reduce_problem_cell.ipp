@@ -79,18 +79,7 @@ inline void reduce_problem_cell(
 
 
 
-/*
- * Check if two cells are considered close enough to be part of the same
- * cluster.
- */
-/*TRACCC_HOST_DEVICE
-bool is_adjacent2(channel_id ac0, channel_id ac1, channel_id bc0,
-                 channel_id bc1) {
-    unsigned int p0 = (ac0 - bc0);
-    unsigned int p1 = (ac1 - bc1);
 
-    return p0 * p0 <= 1 && p1 * p1 <= 1;
-}*/
 
 TRACCC_HOST_DEVICE
 inline void reduce_problem_cell2(
@@ -104,7 +93,7 @@ inline void reduce_problem_cell2(
     const channel_id c0 = id_clusters[cid].channel0;
     const channel_id c1 = id_clusters[cid].channel1;
     const unsigned int mod_id = id_clusters[cid].module_link;
-    unsigned short min_id = cid;
+   unsigned short min_id = cid;
     adjc=0;
     /*
      * First, we traverse the cells backwards, starting from the current

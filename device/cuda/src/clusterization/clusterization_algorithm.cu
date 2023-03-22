@@ -337,19 +337,14 @@ __global__ void ccl_kernel2(
     const cell_module_collection_types::const_view modules_view,
     const CellsView cellsSoA, const unsigned short max_cells_per_partition,
     const unsigned short target_cells_per_partition,
-    /*spacepoint_collection_types::view spacepoints_view,*/
-    alt_measurement_collection_types::view measurements_view,
+    spacepoint_collection_types::view spacepoints_view,
+    /*alt_measurement_collection_types::view measurements_view,*/
     unsigned int& measurement_count,
     vecmem::data::vector_view<unsigned int> cell_links) {
 
     const index_t tid = threadIdx.x;
     const index_t blckDim = blockDim.x;
-    //const alt_cell_collection_types::const_device cells_device(cells_view);
-    //const CellsRefDevice cells_device(cellsSoA);
-    //vecmem::device_vector<unsigned int> ch0(cellsSoA.channel0);
-    //vecmem::device_vector<unsigned int> ch1(cellsSoA.channel1);
-    //vecmem::device_vector<scalar> activation(cellsSoA.activation);
-    //vecmem::device_vector<unsigned int> module_link(cellsSoA.module_link);
+    
 
     const traccc::CellsRefDevice cells_device(cellsSoA);
     const unsigned int num_cells = cellsSoA.size;
@@ -420,8 +415,8 @@ __global__ void ccl_kernel2(
     }
     const cell_module_collection_types::const_device modules_device(
         modules_view);
-    alt_measurement_collection_types::device measurements_device(measurements_view);
-   // spacepoint_collection_types::device spacepoints_device(spacepoints_view);
+    //alt_measurement_collection_types::device measurements_device(measurements_view);
+    spacepoint_collection_types::device spacepoints_device(spacepoints_view);
     // Vector of indices of the adjacent cells
     index_t adjv[MAX_CELLS_PER_THREAD][8];
     /*
@@ -433,7 +428,7 @@ __global__ void ccl_kernel2(
     // Number of adjacent cells
     unsigned char adjc[MAX_CELLS_PER_THREAD];
     //#pragma unroll
-     for (unsigned int tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
+    for (unsigned int tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         //adjc[tst] = 0;
         id_clusters[cid].channel0 = cells_device.channel0[cid+start];
         id_clusters[cid].channel1 = cells_device.channel1[cid+start];
@@ -532,7 +527,7 @@ __syncthreads();
             const unsigned int id = atomicAdd(&outi, 1);
             device::aggregate_cluster2(
                 modules_device, id_clusters, start, end, cid,
-                 /*spacepoints_device*/measurements_device[groupPos + id], cell_links, groupPos+id); 
+                 spacepoints_device/*measurements_device[groupPos + id]*/, cell_links, groupPos+id); 
         }
     }
 }
@@ -570,9 +565,10 @@ clusterization_algorithm::output_type clusterization_algorithm::operator()(
         m_copy.get_size(cells);
 
     // Create result object for the CCL kernel with size overestimation
-    alt_measurement_collection_types::buffer measurements_buffer(num_cells,
-                                                                 m_mr.main);
-
+   /* alt_measurement_collection_types::buffer measurements_buffer(num_cells,
+                                                                 m_mr.main);*/
+    spacepoint_collection_types::buffer spacepoints_buffer(
+        0.3*num_cells, m_mr.main);
     // Counter for number of measurements
     vecmem::unique_alloc_ptr<unsigned int> num_measurements_device =
         vecmem::make_unique_alloc<unsigned int>(m_mr.main);
@@ -598,20 +594,20 @@ clusterization_algorithm::output_type clusterization_algorithm::operator()(
         ccl_kernel<<<num_partitions, threads_per_partition,
                      2 * max_cells_per_partition * sizeof(index_t), stream>>>(
             cells, modules, max_cells_per_partition,
-            m_target_cells_per_partition, measurements_buffer,
+            m_target_cells_per_partition, spacepoints_buffer,
             *num_measurements_device, cell_links);
 
     CUDA_ERROR_CHECK(cudaGetLastError());
 
     // Copy number of measurements to host
-    vecmem::unique_alloc_ptr<unsigned int> num_measurements_host =
+   /* vecmem::unique_alloc_ptr<unsigned int> num_measurements_host =
         vecmem::make_unique_alloc<unsigned int>(*(m_mr.host));
     CUDA_ERROR_CHECK(cudaMemcpyAsync(
         num_measurements_host.get(), num_measurements_device.get(),
-        sizeof(unsigned int), cudaMemcpyDeviceToHost, stream));
+        sizeof(unsigned int), cudaMemcpyDeviceToHost, stream));*/
     m_stream.synchronize();
 
-    spacepoint_collection_types::buffer spacepoints_buffer(
+   /* spacepoint_collection_types::buffer spacepoints_buffer(
         *num_measurements_host, m_mr.main);
 
     // For the following kernel, we can now use whatever the desired number of
@@ -628,7 +624,7 @@ clusterization_algorithm::output_type clusterization_algorithm::operator()(
 
     CUDA_ERROR_CHECK(cudaGetLastError());
     m_stream.synchronize();
-
+*/
     return {std::move(spacepoints_buffer), std::move(cell_links)};
 }
 clusterization_algorithm2::clusterization_algorithm2(
