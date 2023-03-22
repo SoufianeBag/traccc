@@ -696,6 +696,6 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
         spacepoints_buffer);
     CUDA_ERROR_CHECK(cudaGetLastError());
     m_stream.synchronize();*/
-    return {std::move(spacepoints_buffer), std::move(cell_links)};
+    return {std::move(spacepoints_buffer), std::move(num_measurements_device)};
 }
 }  // namespace traccc::cuda
