@@ -60,7 +60,9 @@ spacepoint_binning::spacepoint_binning(
 }
 
 sp_grid_buffer spacepoint_binning::operator()(
-    const spacepoint_collection_types::const_view& spacepoints_view) const {
+    const spacepoint_collection_types::const_view& spacepoints_view,  
+                            vecmem::unique_alloc_ptr<unsigned int>  
+                             num_measurements_device) const {
 
     // Get the spacepoint sizes from the view
     auto sp_size = m_copy->get_size(spacepoints_view);
