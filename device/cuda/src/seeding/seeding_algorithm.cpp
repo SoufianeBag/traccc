@@ -76,7 +76,7 @@ seeding_algorithm2::seeding_algorithm2(const traccc::memory_resource& mr)
 
 seeding_algorithm2::output_type seeding_algorithm2::operator()(
     const spacepoint_collection_types::const_view& spacepoints_view,
-    const unsigned int num_measurements_device) const {
+    const unsigned int& num_measurements_device) const {
 
     return m_seed_finding(spacepoints_view,
                           m_spacepoint_binning(spacepoints_view,num_measurements_device));
