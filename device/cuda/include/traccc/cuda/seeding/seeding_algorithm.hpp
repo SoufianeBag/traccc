@@ -70,7 +70,7 @@ class seeding_algorithm2 : public algorithm<alt_seed_collection_types::buffer(
 
     private:
     /// Sub-algorithm performing the spacepoint binning
-    spacepoint_binning m_spacepoint_binning;
+    spacepoint_binning2 m_spacepoint_binning;
     /// Sub-algorithm performing the seed finding
     seed_finding m_seed_finding;
 
