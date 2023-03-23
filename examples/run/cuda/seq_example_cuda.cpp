@@ -107,7 +107,7 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
         traccc::track_params_estimation::output_type params;
          // Cells Buffer
         traccc::CellsBuffer cellsSoA;
-        unsigned int num_measurements_device;
+        const unsigned int num_measurements_device;
         // Instantiate cuda containers/collections
         traccc::spacepoint_collection_types::buffer spacepoints_cuda_buffer(
             0, *mr.host);
