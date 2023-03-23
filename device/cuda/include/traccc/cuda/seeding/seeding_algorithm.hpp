@@ -52,7 +52,7 @@ class seeding_algorithm : public algorithm<alt_seed_collection_types::buffer(
 };  // class seeding_algorithm
 class seeding_algorithm2 : public algorithm<alt_seed_collection_types::buffer(
                               const spacepoint_collection_types::const_view&,
-                              vecmem::unique_alloc_ptr<unsigned int>)> {
+                              const vecmem::unique_alloc_ptr<unsigned int>)> {
 
     public:
     /// Constructor for the seed finding algorithm

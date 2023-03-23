@@ -65,7 +65,7 @@ seeding_algorithm::seeding_algorithm(const traccc::memory_resource& mr)
 
 seeding_algorithm::output_type seeding_algorithm::operator()(
     const spacepoint_collection_types::const_view& spacepoints_view,
-    vecmem::unique_alloc_ptr<unsigned int> num_measurements_device) const {
+    const vecmem::unique_alloc_ptr<unsigned int> num_measurements_device) const {
 
     return m_seed_finding(spacepoints_view,
                           m_spacepoint_binning(spacepoints_view));

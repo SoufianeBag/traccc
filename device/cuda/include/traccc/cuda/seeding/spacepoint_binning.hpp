@@ -49,7 +49,7 @@ class spacepoint_binning
 class spacepoint_binning2
     : public algorithm<sp_grid_buffer(
           const spacepoint_collection_types::const_view&, 
-           vecmem::unique_alloc_ptr<unsigned int>)> {
+           const vecmem::unique_alloc_ptr<unsigned int>)> {
 
     public:
     /// Constructor for the algorithm
@@ -60,7 +60,7 @@ class spacepoint_binning2
     /// Function executing the algorithm with a a view of spacepoints
     sp_grid_buffer operator()(const spacepoint_collection_types::const_view&
                                   spacepoints_view, 
-                             vecmem::unique_alloc_ptr<unsigned int>  
+                             const vecmem::unique_alloc_ptr<unsigned int>  
                              num_measurements_device) const override;
 
     private:
