@@ -51,8 +51,7 @@ class seeding_algorithm : public algorithm<alt_seed_collection_types::buffer(
 
 };  // class seeding_algorithm
 class seeding_algorithm2 : public algorithm<alt_seed_collection_types::buffer(
-                              const spacepoint_collection_types::const_view&),
-                              const unsigned int> {
+                              const spacepoint_collection_types::const_view&)> {
 
     public:
     /// Constructor for the seed finding algorithm
