@@ -59,7 +59,7 @@ class spacepoint_binning2
     /// Function executing the algorithm with a a view of spacepoints
     sp_grid_buffer operator()(const spacepoint_collection_types::const_view&
                                   spacepoints_view, 
-                             const unsigned int num_measurements_device) const override;
+                             const unsigned int& num_measurements_device) const override;
 
     private:
     /// Member variables
