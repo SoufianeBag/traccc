@@ -107,7 +107,7 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
         traccc::track_params_estimation::output_type params;
          // Cells Buffer
         traccc::CellsBuffer cellsSoA;
-        vecmem::unique_alloc_ptr<unsigned int> num_measurements_device;
+        unsigned int num_measurements_device;
         // Instantiate cuda containers/collections
         traccc::spacepoint_collection_types::buffer spacepoints_cuda_buffer(
             0, *mr.host);
@@ -166,7 +166,7 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
                 spacepoints_cuda_buffer =
                     ca_cuda(cells_buffer, modules_buffer , cellsSoA).first;
                 stream.synchronize();
-                num_measurements_device = std::move(ca_cuda(cells_buffer, modules_buffer , cellsSoA).second);
+                *num_measurements_device = ca_cuda(cells_buffer, modules_buffer , cellsSoA).second;
                // printf("num_measurements_device = %p\n", static_cast<void*>(ca_cuda(cells_buffer, modules_buffer , cellsSoA).second.get()));
             }  // stop measuring clusterization cuda timer
 
