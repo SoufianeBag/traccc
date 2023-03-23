@@ -58,8 +58,57 @@ spacepoint_binning::spacepoint_binning(
         m_copy = std::make_unique<vecmem::copy>();
     }
 }
-
 sp_grid_buffer spacepoint_binning::operator()(
+    const spacepoint_collection_types::const_view& spacepoints_view) const {
+
+    // Get the spacepoint sizes from the view
+    auto sp_size = m_copy->get_size(spacepoints_view);
+
+    // Set up the container that will be filled with the required capacities for
+    // the spacepoint grid.
+    const std::size_t grid_bins = m_axes.first.n_bins * m_axes.second.n_bins;
+    vecmem::data::vector_buffer<unsigned int> grid_capacities_buff(grid_bins,
+                                                                   m_mr.main);
+    m_copy->setup(grid_capacities_buff);
+    m_copy->memset(grid_capacities_buff, 0);
+    vecmem::data::vector_view<unsigned int> grid_capacities_view =
+        grid_capacities_buff;
+
+    // Calculate the number of threads and thread blocks to run the kernels for.
+    const unsigned int num_threads = WARP_SIZE * 8;
+    const unsigned int num_blocks = (sp_size + num_threads - 1) / num_threads;
+
+    // Fill the grid capacity container.
+    kernels::count_grid_capacities<<<num_blocks, num_threads>>>(
+        m_config, m_axes.first, m_axes.second, spacepoints_view,
+        grid_capacities_view);
+    CUDA_ERROR_CHECK(cudaGetLastError());
+    CUDA_ERROR_CHECK(cudaDeviceSynchronize());
+
+    // Copy grid capacities back to the host
+    vecmem::vector<unsigned int> grid_capacities_host(m_mr.host ? m_mr.host
+                                                                : &(m_mr.main));
+    (*m_copy)(grid_capacities_buff, grid_capacities_host);
+
+    // Create the grid buffer.
+    sp_grid_buffer grid_buffer(
+        m_axes.first, m_axes.second, std::vector<std::size_t>(grid_bins, 0),
+        std::vector<std::size_t>(grid_capacities_host.begin(),
+                                 grid_capacities_host.end()),
+        m_mr.main, m_mr.host);
+    m_copy->setup(grid_buffer._buffer);
+    sp_grid_view grid_view = grid_buffer;
+
+    // Populate the grid.
+    kernels::populate_grid<<<num_blocks, num_threads>>>(
+        m_config, spacepoints_view, grid_view);
+    CUDA_ERROR_CHECK(cudaGetLastError());
+    CUDA_ERROR_CHECK(cudaDeviceSynchronize());
+
+    // Return the freshly filled buffer.
+    return grid_buffer;
+}
+sp_grid_buffer spacepoint_binning2::operator()(
     const spacepoint_collection_types::const_view& spacepoints_view,  
                             vecmem::unique_alloc_ptr<unsigned int>  
                              num_measurements_device) const {
