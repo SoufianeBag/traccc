@@ -48,8 +48,8 @@ class spacepoint_binning
 };  // class spacepoint_binning
 class spacepoint_binning2
     : public algorithm<sp_grid_buffer(
-          const spacepoint_collection_types::const_view&, 
-           const unsigned int)> {
+          const spacepoint_collection_types::const_view&), 
+           const unsigned int> {
 
     public:
     /// Constructor for the algorithm
