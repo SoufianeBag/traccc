@@ -108,9 +108,24 @@ sp_grid_buffer spacepoint_binning::operator()(
     // Return the freshly filled buffer.
     return grid_buffer;
 }
+spacepoint_binning2::spacepoint_binning2(
+    const seedfinder_config& config, const spacepoint_grid_config& grid_config,
+    const traccc::memory_resource& mr)
+    : m_config(config.toInternalUnits()),
+      m_axes(get_axes(grid_config.toInternalUnits(),
+                      (mr.host ? *(mr.host) : mr.main))),
+      m_mr(mr) {
+
+    // Initialize m_copy ptr based on memory resources that were given
+    if (mr.host) {
+        m_copy = std::make_unique<vecmem::cuda::copy>();
+    } else {
+        m_copy = std::make_unique<vecmem::copy>();
+    }
+}
 sp_grid_buffer spacepoint_binning2::operator()(
     const spacepoint_collection_types::const_view& spacepoints_view,  
-                            const unsigned int*
+                            const unsigned int
                              num_measurements_device) const {
 
     // Get the spacepoint sizes from the view

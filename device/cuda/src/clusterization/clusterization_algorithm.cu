@@ -675,6 +675,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
             *num_measurements_device, cell_links);
     CUDA_ERROR_CHECK(cudaGetLastError());
     m_stream.synchronize();
+    unsigned int num_measurements = *num_measurements_device;
     // Copy number of measurements to host
    /* vecmem::unique_alloc_ptr<unsigned int> num_measurements_host =
         vecmem::make_unique_alloc<unsigned int>(*(m_mr.host));
@@ -696,6 +697,6 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
         spacepoints_buffer);
     CUDA_ERROR_CHECK(cudaGetLastError());
     m_stream.synchronize();*/
-    return {std::move(spacepoints_buffer), std::move(num_measurements_device)};
+    return {std::move(spacepoints_buffer),num_measurements};
 }
 }  // namespace traccc::cuda
