@@ -354,7 +354,7 @@ __global__ void ccl_kernel2(
     /*
      * This variable will be used to write to the output later.
      */
-    __shared__ unsigned int outi, count;
+    __shared__ unsigned int outi;
     /*
      * First, we determine the exact range of cells that is to be examined by
      * this block of threads. We start from an initial range determined by the
@@ -370,7 +370,7 @@ __global__ void ccl_kernel2(
         assert(start < num_cells);
         end = std::min(num_cells, start + target_cells_per_partition);
         outi = 0;
-        count =0;
+       
 
         /*
          * Next, shift the starting point to a position further in the array;
@@ -453,7 +453,7 @@ __global__ void ccl_kernel2(
         /*
          * Look for adjacent cells to the current one.
          */
-        device::reduce_problem_cell2( cid, start, end,count, adjc[tst],
+        device::reduce_problem_cell2( cid, start, end, adjc[tst],
                                     adjv[tst],id_clusters);
         
     }

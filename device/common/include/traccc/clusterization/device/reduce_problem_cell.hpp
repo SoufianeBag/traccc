@@ -39,7 +39,7 @@ TRACCC_DEVICE
 inline void reduce_problem_cell2(
     const CellsRefDevice& cellsSoA_device,
     const unsigned short cid, const unsigned int start, const unsigned int end,
-    unsigned int count,unsigned char& adjc, unsigned short adjv[8],cluster* id_clusters);
+    unsigned char& adjc, unsigned short adjv[8],cluster* id_clusters);
 
 }  // namespace traccc::device
 
