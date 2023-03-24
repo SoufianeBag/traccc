@@ -683,7 +683,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
         sizeof(unsigned int), cudaMemcpyDeviceToHost, stream));
     m_stream.synchronize();
     spacepoint_collection_types::view spacepoints_view(
-       num_measurements_host ,spacepoints_buffer.get_data() );
+       num_measurements_host , spacepoint_collection_types::view(spacepoints_buffer) );
     /*spacepoint_collection_types::buffer spacepoints_buffer(
         *num_measurements_host, m_mr.main);
     // For the following kernel, we can now use whatever the desired number of
