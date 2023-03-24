@@ -81,7 +81,7 @@ inline void reduce_problem_cell(
 
 
 
-TRACCC_HOST_DEVICE
+TRACCC_DEVICE
 inline void reduce_problem_cell2(
     const unsigned short cid, const unsigned int start, const unsigned int end,
     unsigned int count, unsigned char& adjc, unsigned short adjv[8], cluster* id_clusters) {
