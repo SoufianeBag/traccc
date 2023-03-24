@@ -530,6 +530,7 @@ __syncthreads();
                  spacepoints_device/*measurements_device[groupPos + id]*/, cell_links, groupPos+id); 
         }
     }
+
 }
 
 __global__ void form_spacepoints(
@@ -682,8 +683,10 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
         num_measurements_host.get(), num_measurements_device.get(),
         sizeof(unsigned int), cudaMemcpyDeviceToHost, stream));
     m_stream.synchronize();
-    spacepoint_collection_types::view spacepoints_view(
-       *num_measurements_host , spacepoint_collection_types::view(spacepoints_buffer) );
+        //vecmem::data::vector_view<cluster> f_view(max_cells_per_partition, id_clusters);
+
+    vecmem::data::vector_view<spacepoint> spacepoints_view(
+       *num_measurements_host , vecmem::get_data(spacepoints_buffer) );
     /*spacepoint_collection_types::buffer spacepoints_buffer(
         *num_measurements_host, m_mr.main);
     // For the following kernel, we can now use whatever the desired number of
