@@ -647,7 +647,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
                                                                  m_mr.main);*/
                                                                  
      spacepoint_collection_types::buffer spacepoints_buffer(
-        0.3*num_cells, m_mr.main);
+        num_cells, m_mr.main);
     // Counter for number of measurements
     vecmem::unique_alloc_ptr<unsigned int> num_measurements_device =
         vecmem::make_unique_alloc<unsigned int>(m_mr.main);
@@ -675,15 +675,16 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
             *num_measurements_device, cell_links);
     CUDA_ERROR_CHECK(cudaGetLastError());
     m_stream.synchronize();
-    unsigned int num_measurements = *num_measurements_device;
     // Copy number of measurements to host
-   /* vecmem::unique_alloc_ptr<unsigned int> num_measurements_host =
+    vecmem::unique_alloc_ptr<unsigned int> num_measurements_host =
         vecmem::make_unique_alloc<unsigned int>(*(m_mr.host));
     CUDA_ERROR_CHECK(cudaMemcpyAsync(
         num_measurements_host.get(), num_measurements_device.get(),
         sizeof(unsigned int), cudaMemcpyDeviceToHost, stream));
     m_stream.synchronize();
-    spacepoint_collection_types::buffer spacepoints_buffer(
+    spacepoint_collection_types::view spacepoints_view(
+       num_measurements_host ,spacepoints_buffer.data() );
+    /*spacepoint_collection_types::buffer spacepoints_buffer(
         *num_measurements_host, m_mr.main);
     // For the following kernel, we can now use whatever the desired number of
     // threads per block.
@@ -697,6 +698,6 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
         spacepoints_buffer);
     CUDA_ERROR_CHECK(cudaGetLastError());
     m_stream.synchronize();*/
-    return {std::move(spacepoints_buffer),num_measurements};
+    return {std::move(spacepoints_view), std::move(num_measurements_device)};
 }
 }  // namespace traccc::cuda
