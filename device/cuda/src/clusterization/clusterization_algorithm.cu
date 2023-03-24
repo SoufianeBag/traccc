@@ -686,7 +686,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
         //vecmem::data::vector_view<cluster> f_view(max_cells_per_partition, id_clusters);
 
     vecmem::data::vector_view<spacepoint> spacepoints_view(
-       *num_measurements_host , vecmem::get_data(spacepoints_buffer) );
+       *num_measurements_host , *(vecmem::get_data(spacepoints_buffer).ptr()) );
     /*spacepoint_collection_types::buffer spacepoints_buffer(
         *num_measurements_host, m_mr.main);
     // For the following kernel, we can now use whatever the desired number of
