@@ -459,6 +459,7 @@ __global__ void ccl_kernel2(
     }
     
     __syncthreads();
+    printf("outi : %u | count: %u \n", outi,count);
    bool gf_changed ;
     do {
         
@@ -502,7 +503,7 @@ __syncthreads();
      * previously. However, since each thread block spawns a the maximum
      * amount of threads per block, this has no sever implications.
      */
-    printf("outi : %u | count: %u \n", outi,count);
+    
     if (tid == 0) {
         outi = atomicAdd(&measurement_count, outi);
         //printf("outi %u \n", outi);
