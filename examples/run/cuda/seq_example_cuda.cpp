@@ -219,7 +219,7 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
                 traccc::performance::timer t("Track params (cuda)",
                                              elapsedTimes);
                 params_cuda_buffer =
-                    tp_cuda(spacepoints_cuda_buffer, seeds_cuda_buffer);
+                    tp_cuda(spacepoints_cuda.first, seeds_cuda_buffer);
             }  // stop measuring track params timer
 
             // CPU
@@ -239,11 +239,11 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
         traccc::spacepoint_collection_types::host spacepoints_per_event_cuda;
         traccc::alt_seed_collection_types::host seeds_cuda;
         traccc::bound_track_parameters_collection_types::host params_cuda;
-        if (run_cpu || i_cfg.check_performance) {
+        /*if (run_cpu || i_cfg.check_performance) {
             copy(spacepoints_cuda_buffer, spacepoints_per_event_cuda);
             copy(seeds_cuda_buffer, seeds_cuda);
             copy(params_cuda_buffer, params_cuda);
-        }
+        }*/
 
         if (run_cpu) {
 
