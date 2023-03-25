@@ -370,7 +370,7 @@ __global__ void ccl_kernel2(
         assert(start < num_cells);
         end = std::min(num_cells, start + target_cells_per_partition);
         outi = 0;
-       
+        
 
         /*
          * Next, shift the starting point to a position further in the array;
@@ -459,7 +459,6 @@ __global__ void ccl_kernel2(
     }
     
     __syncthreads();
-    printf("outi : %u | count: %u \n", outi,count);
    bool gf_changed ;
     do {
         
@@ -503,7 +502,6 @@ __syncthreads();
      * previously. However, since each thread block spawns a the maximum
      * amount of threads per block, this has no sever implications.
      */
-    
     if (tid == 0) {
         outi = atomicAdd(&measurement_count, outi);
         //printf("outi %u \n", outi);
@@ -532,6 +530,7 @@ __syncthreads();
                  spacepoints_device/*measurements_device[groupPos + id]*/, cell_links, groupPos+id); 
         }
     }
+
 }
 
 __global__ void form_spacepoints(
@@ -649,7 +648,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
                                                                  m_mr.main);*/
                                                                  
      spacepoint_collection_types::buffer spacepoints_buffer(
-        0.3*num_cells, m_mr.main);
+        num_cells, m_mr.main);
     // Counter for number of measurements
     vecmem::unique_alloc_ptr<unsigned int> num_measurements_device =
         vecmem::make_unique_alloc<unsigned int>(m_mr.main);
@@ -678,13 +677,17 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
     CUDA_ERROR_CHECK(cudaGetLastError());
     m_stream.synchronize();
     // Copy number of measurements to host
-   /* vecmem::unique_alloc_ptr<unsigned int> num_measurements_host =
+    vecmem::unique_alloc_ptr<unsigned int> num_measurements_host =
         vecmem::make_unique_alloc<unsigned int>(*(m_mr.host));
     CUDA_ERROR_CHECK(cudaMemcpyAsync(
         num_measurements_host.get(), num_measurements_device.get(),
         sizeof(unsigned int), cudaMemcpyDeviceToHost, stream));
     m_stream.synchronize();
-    spacepoint_collection_types::buffer spacepoints_buffer(
+        //vecmem::data::vector_view<cluster> f_view(max_cells_per_partition, id_clusters);
+    vecmem::data::vector_view<spacepoint> spacepoints_view(
+       *num_measurements_host , vecmem::get_data(spacepoints_buffer).ptr() );
+    
+    /*spacepoint_collection_types::buffer spacepoints_buffer(
         *num_measurements_host, m_mr.main);
     // For the following kernel, we can now use whatever the desired number of
     // threads per block.
@@ -698,6 +701,6 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
         spacepoints_buffer);
     CUDA_ERROR_CHECK(cudaGetLastError());
     m_stream.synchronize();*/
-    return {std::move(spacepoints_buffer), std::move(cell_links)};
+    return {std::move(spacepoints_view), std::move(*num_measurements_host)};
 }
 }  // namespace traccc::cuda

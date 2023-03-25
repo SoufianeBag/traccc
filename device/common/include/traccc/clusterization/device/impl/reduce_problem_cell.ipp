@@ -81,7 +81,7 @@ inline void reduce_problem_cell(
 
 
 
-TRACCC_DEVICE
+TRACCC_HOST_DEVICE
 inline void reduce_problem_cell2(
     const unsigned short cid, const unsigned int start, const unsigned int end,
     unsigned char& adjc, unsigned short adjv[8], cluster* id_clusters) {
@@ -109,7 +109,6 @@ inline void reduce_problem_cell2(
          */
         //assert(j>= 0);
         if (id_clusters[j].channel1 + 1 < c1 || id_clusters[j].module_link != mod_id) {
-           
             break;
         }
 
@@ -135,7 +134,6 @@ inline void reduce_problem_cell2(
          * important difference.
          */
         if (id_clusters[j].channel1 > c1 + 1 || id_clusters[j].module_link != mod_id) {
-           
             break;
         }
 

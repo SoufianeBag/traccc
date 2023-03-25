@@ -109,8 +109,8 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
         traccc::CellsBuffer cellsSoA;
 
         // Instantiate cuda containers/collections
-        traccc::spacepoint_collection_types::buffer spacepoints_cuda_buffer(
-            0, *mr.host);
+       // traccc::spacepoint_collection_types::view spacepoints_cuda_view(0, *mr.host);
+        std::pair<spacepoint_collection_types::const_view,unsigned int> spacepoints_cuda;
         traccc::alt_seed_collection_types::buffer seeds_cuda_buffer(0,
                                                                     *mr.host);
         traccc::bound_track_parameters_collection_types::buffer
@@ -163,11 +163,11 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
                 traccc::performance::timer t("Clusterization (cuda)",
                                              elapsedTimes);
                 // Reconstruct it into spacepoints on the device.
-                spacepoints_cuda_buffer =
-                    ca_cuda(cells_buffer, modules_buffer , cellsSoA).first;
+                spacepoints_cuda =ca_cuda(cells_buffer, modules_buffer , cellsSoA);
                 stream.synchronize();
+               // printf("num_measurements_device = %p\n", static_cast<void*>(ca_cuda(cells_buffer, modules_buffer , cellsSoA).second.get()));
             }  // stop measuring clusterization cuda timer
-
+ 
             if (run_cpu) {
 
                 /*-----------------------------
@@ -199,7 +199,7 @@ int seq_run(const traccc::full_tracking_input_config& i_cfg,
 
             {
                 traccc::performance::timer t("Seeding (cuda)", elapsedTimes);
-                seeds_cuda_buffer = sa_cuda(spacepoints_cuda_buffer);
+                seeds_cuda_buffer = sa_cuda(spacepoints_cuda.first);
             }  // stop measuring seeding cuda timer
 
             // CPU
