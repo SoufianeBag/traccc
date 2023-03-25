@@ -13,6 +13,7 @@
         "xloctime": "cpp",
         "algorithm": "cpp",
         "format": "cpp",
-        "xiosbase": "cpp"
+        "xiosbase": "cpp",
+        "utility": "cpp"
     }
 }

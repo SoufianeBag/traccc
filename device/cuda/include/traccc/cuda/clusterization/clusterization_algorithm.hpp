@@ -168,7 +168,7 @@ class clusterization_algorithm
 };
 class clusterization_algorithm2
     : public algorithm<std::pair<spacepoint_collection_types::view,
-                                 unsigned int>(
+                                 spacepoint_collection_types::buffer>(
           const alt_cell_collection_types::const_view&,
           const cell_module_collection_types::const_view&,
           const traccc::CellsView&)> {
