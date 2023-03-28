@@ -525,13 +525,16 @@ __global__ void ccl_kernel2(
 #pragma unroll
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         const index_t cid = tst * blckDim + tid;
+        const index_t ccid = tst + tid*MAX_CELLS_PER_THREAD;
+
         adjc[tst] = 0;
-        f[cid] = cid ;
+        f[ccid] = cid ;
     }
 #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         
          const index_t id = tst*8 + tid*8*MAX_CELLS_PER_THREAD;
+         const index_t ccid = tst + tid*MAX_CELLS_PER_THREAD;
          
          
         /* 
@@ -571,7 +574,7 @@ __global__ void ccl_kernel2(
         if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
             vsmem[id + adjc[tst] ] = j - start;
             adjc[tst]++;
-            if ( f[cid] > j - start )  f[cid] = j - start ;
+            if ( f[ccid] > j - start )  f[ccid] = j - start ;
         }
     }
 
@@ -591,7 +594,7 @@ __global__ void ccl_kernel2(
         if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j], cellsSoA_device.channel1[j])) {
             vsmem[id + adjc[tst] ] = j - start;
             adjc[tst]++;
-            if ( f[cid] > j - start )  f[cid] = j - start ;
+            if ( f[ccid] > j - start )  f[ccid] = j - start ;
            
         }
     }
@@ -640,8 +643,8 @@ __global__ void ccl_kernel2(
 
         #pragma unroll
         for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
-            const index_t cid = tst * blckDim + tid;
-            index_t id = tst*8 + tid*8*MAX_CELLS_PER_THREAD;
+            const index_t cid = tst + tid*MAX_CELLS_PER_THREAD;
+            const index_t id = tst*8 + tid*8*MAX_CELLS_PER_THREAD;
             
             
                 #pragma unroll
@@ -667,7 +670,8 @@ __global__ void ccl_kernel2(
      */
 
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
-        if (f[cid] == cid) {
+        const index_t ccid = tst + tid*MAX_CELLS_PER_THREAD;
+        if (f[ccid] == cid) {
             atomicAdd(&outi, 1);
         }
         //printf("f[cid] %u \n ", f[cid] );
@@ -695,17 +699,19 @@ __global__ void ccl_kernel2(
         outi = 0;
     }
     __syncthreads();
+
     vecmem::data::vector_view<index_t> f_view(max_cells_per_partition, f);   //// it's a view so it will access to f.data , if the constuctor is well optimize  
-    #pragma unroll
+    
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
-        if (f[cid] == cid) {
+        const index_t ccid = tst + tid*MAX_CELLS_PER_THREAD;
+        if (f[ccid] == cid) {
             /*
              * If we are a cluster owner, atomically claim a position in the
              * output array which we can write to.
              */
             const unsigned int id = atomicAdd(&outi, 1);
             device::aggregate_cluster2(
-                cellsSoA_device, modules_device, f_view, start, end, cid,
+                cellsSoA_device, modules_device, f_view, start, end, cid, ccid , 
                 measurements_device[groupPos + id], cell_links, groupPos + id); 
         }
     }
