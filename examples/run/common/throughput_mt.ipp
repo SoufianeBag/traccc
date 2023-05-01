@@ -13,6 +13,7 @@
 #include "traccc/options/throughput_options.hpp"
 
 // I/O include(s).
+#include "traccc/io/demonstrator_edm.hpp"
 #include "traccc/io/read.hpp"
 
 // Performance measurement include(s).
@@ -79,14 +80,17 @@ int throughput_mt(std::string_view description, int argc, char* argv[],
     HOST_MR uncached_host_mr;
 
     // Read in all input events into memory.
-    demonstrator_input cells;
+    demonstrator_input input;
     {
         performance::timer t{"File reading", times};
-        cells = io::read(throughput_cfg.loaded_events,
-                         throughput_cfg.input_directory,
-                         throughput_cfg.detector_file,
-                         throughput_cfg.digitization_config_file,
-                         throughput_cfg.input_data_format, &uncached_host_mr);
+        for (unsigned int event = 0; event < throughput_cfg.loaded_events;
+             ++event) {
+            input = io::read(
+                throughput_cfg.loaded_events, throughput_cfg.input_directory,
+                throughput_cfg.detector_file,
+                throughput_cfg.digitization_config_file,
+                throughput_cfg.input_data_format, &uncached_host_mr);
+        }
     }
 
     // Set up cached memory resources on top of the host memory resource
@@ -98,6 +102,7 @@ int throughput_mt(std::string_view description, int argc, char* argv[],
     std::vector<FULL_CHAIN_ALG> algs;
     algs.reserve(mt_cfg.threads + 1);
     for (std::size_t i = 0; i < mt_cfg.threads + 1; ++i) {
+
         cached_host_mrs.at(i) =
             std::make_unique<vecmem::binary_page_memory_resource>(
                 uncached_host_mr);
@@ -106,7 +111,8 @@ int throughput_mt(std::string_view description, int argc, char* argv[],
                 ? static_cast<vecmem::memory_resource&>(
                       *(cached_host_mrs.at(i)))
                 : static_cast<vecmem::memory_resource&>(uncached_host_mr);
-        algs.push_back({alg_host_mr});
+        algs.push_back(
+            {alg_host_mr, throughput_cfg.target_cells_per_partition});
     }
 
     // Seed the random number generator.
@@ -134,7 +140,7 @@ int throughput_mt(std::string_view description, int argc, char* argv[],
                 group.run([&, event]() {
                     rec_track_params.fetch_add(
                         algs.at(tbb::this_task_arena::current_thread_index())(
-                                cells[event])
+                                input[event].cells, input[event].modules)
                             .size());
                 });
             });
@@ -158,12 +164,15 @@ int throughput_mt(std::string_view description, int argc, char* argv[],
             const std::size_t event =
                 std::rand() % throughput_cfg.loaded_events;
 
+            // std::cout << "running event " << i << " : " << event <<
+            // std::endl;
+
             // Launch the processing of the event.
             arena.execute([&, event]() {
                 group.run([&, event]() {
                     rec_track_params.fetch_add(
                         algs.at(tbb::this_task_arena::current_thread_index())(
-                                cells[event])
+                                input[event].cells, input[event].modules)
                             .size());
                 });
             });
@@ -199,6 +208,7 @@ int throughput_mt(std::string_view description, int argc, char* argv[],
                 << "," << mt_cfg.threads << "," << throughput_cfg.loaded_events
                 << "," << throughput_cfg.cold_run_events << ","
                 << throughput_cfg.processed_events << ","
+                << throughput_cfg.target_cells_per_partition << ","
                 << times.get_time("Warm-up processing").count() << ","
                 << times.get_time("Event processing").count() << std::endl;
         logFile.close();

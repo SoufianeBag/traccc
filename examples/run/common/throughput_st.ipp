@@ -12,6 +12,7 @@
 #include "traccc/options/throughput_options.hpp"
 
 // I/O include(s).
+#include "traccc/io/demonstrator_edm.hpp"
 #include "traccc/io/read.hpp"
 
 // Performance measurement include(s).
@@ -61,25 +62,29 @@ int throughput_st(std::string_view description, int argc, char* argv[],
     HOST_MR uncached_host_mr;
     std::unique_ptr<vecmem::binary_page_memory_resource> cached_host_mr =
         std::make_unique<vecmem::binary_page_memory_resource>(uncached_host_mr);
+
     vecmem::memory_resource& alg_host_mr =
         use_host_caching
             ? static_cast<vecmem::memory_resource&>(*cached_host_mr)
             : static_cast<vecmem::memory_resource&>(uncached_host_mr);
 
     // Read in all input events into memory.
-    demonstrator_input cells;
+    demonstrator_input input;
     {
         performance::timer t{"File reading", times};
-        cells = io::read(throughput_cfg.loaded_events,
-                         throughput_cfg.input_directory,
-                         throughput_cfg.detector_file,
-                         throughput_cfg.digitization_config_file,
-                         throughput_cfg.input_data_format, &uncached_host_mr);
+        for (unsigned int event = 0; event < throughput_cfg.loaded_events;
+             ++event) {
+            input = io::read(
+                throughput_cfg.loaded_events, throughput_cfg.input_directory,
+                throughput_cfg.detector_file,
+                throughput_cfg.digitization_config_file,
+                throughput_cfg.input_data_format, &uncached_host_mr);
+        }
     }
 
     // Set up the full-chain algorithm.
-    std::unique_ptr<FULL_CHAIN_ALG> alg =
-        std::make_unique<FULL_CHAIN_ALG>(alg_host_mr);
+    std::unique_ptr<FULL_CHAIN_ALG> alg = std::make_unique<FULL_CHAIN_ALG>(
+        alg_host_mr, throughput_cfg.target_cells_per_partition);
 
     // Seed the random number generator.
     std::srand(std::time(0));
@@ -102,7 +107,8 @@ int throughput_st(std::string_view description, int argc, char* argv[],
                 std::rand() % throughput_cfg.loaded_events;
 
             // Process one event.
-            rec_track_params += (*alg)(cells[event]).size();
+            rec_track_params +=
+                (*alg)(input[event].cells, input[event].modules).size();
         }
     }
 
@@ -121,7 +127,8 @@ int throughput_st(std::string_view description, int argc, char* argv[],
                 std::rand() % throughput_cfg.loaded_events;
 
             // Process one event.
-            rec_track_params += (*alg)(cells[event]).size();
+            rec_track_params +=
+                (*alg)(input[event].cells, input[event].modules).size();
         }
     }
 

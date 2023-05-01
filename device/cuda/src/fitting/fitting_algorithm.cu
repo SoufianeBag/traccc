@@ -13,6 +13,7 @@
 
 // detray include(s).
 #include "detray/detectors/detector_metadata.hpp"
+#include "detray/masks/unbounded.hpp"
 #include "detray/propagator/rk_stepper.hpp"
 
 // System include(s).
@@ -70,10 +71,8 @@ track_state_container_types::buffer fitting_algorithm<fitter_t>::operator()(
 
     track_state_container_types::buffer track_states_buffer{
         {n_tracks, m_mr.main},
-        {std::vector<std::size_t>(n_tracks),
-         std::vector<std::size_t>(candidate_sizes.begin(),
-                                  candidate_sizes.end()),
-         m_mr.main, m_mr.host}};
+        {candidate_sizes, m_mr.main, m_mr.host,
+         vecmem::data::buffer_type::resizable}};
 
     m_copy->setup(track_states_buffer.headers);
     m_copy->setup(track_states_buffer.items);
@@ -81,22 +80,24 @@ track_state_container_types::buffer fitting_algorithm<fitter_t>::operator()(
 
     // Calculate the number of threads and thread blocks to run the track
     // fitting
-    const unsigned int nThreads = WARP_SIZE * 2;
-    const unsigned int nBlocks = (n_tracks + nThreads - 1) / nThreads;
+    if (n_tracks > 0) {
+        const unsigned int nThreads = WARP_SIZE * 2;
+        const unsigned int nBlocks = (n_tracks + nThreads - 1) / nThreads;
 
-    // Run the track fitting
-    kernels::fit<fitter_t><<<nBlocks, nThreads>>>(det_view, navigation_buffer,
-                                                  track_candidates_view,
-                                                  track_states_buffer);
-    CUDA_ERROR_CHECK(cudaGetLastError());
-    CUDA_ERROR_CHECK(cudaDeviceSynchronize());
-
+        // Run the track fitting
+        kernels::fit<fitter_t>
+            <<<nBlocks, nThreads>>>(det_view, navigation_buffer,
+                                    track_candidates_view, track_states_buffer);
+        CUDA_ERROR_CHECK(cudaGetLastError());
+        CUDA_ERROR_CHECK(cudaDeviceSynchronize());
+    }
     return track_states_buffer;
 }
 
 // Explicit template instantiation
 using device_detector_type =
-    detray::detector<detray::detector_registry::telescope_detector,
+    detray::detector<detray::detector_registry::template telescope_detector<
+                         detray::unbounded<detray::rectangle2D<>>>,
                      covfie::field_view, detray::device_container_types>;
 using rk_stepper_type = detray::rk_stepper<
     covfie::field<device_detector_type::bfield_backend_type>::view_t,
