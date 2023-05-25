@@ -26,6 +26,16 @@ struct alt_cell {
     link_type module_link;
 };
 
+struct cluster{
+    unsigned short id_cluster_f ;
+    unsigned short id_cluster_gf ;
+    channel_id channel0 = 0;
+    channel_id channel1 = 0;
+    scalar activation = 0.;
+    using link_type = cell_module_collection_types::view::size_type;
+    link_type module_link;
+};
+
 using scalar = TRACCC_CUSTOM_SCALARTYPE;
 using uint_collection_types = collection_types<unsigned int>;
 using scalar_collection_types = collection_types<scalar>;

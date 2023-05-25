@@ -113,14 +113,14 @@ inline void aggregate_cluster(
 
 TRACCC_DEVICE
 inline void aggregate_cluster2(
-     const CellsRefDevice& cellsSoA_device,
     const cell_module_collection_types::const_device& modules,
-    const vecmem::data::vector_view<unsigned short> f_view,
+    cluster* arg_reduce,
+    //const vecmem::data::vector_view<unsigned short> f_view,
     const unsigned int start, const unsigned int end, const unsigned short cid,
     alt_measurement& out, vecmem::data::vector_view<unsigned int> cell_links,
     const unsigned int link) {
 
-    const vecmem::device_vector<unsigned short> f(f_view);
+    //const vecmem::device_vector<unsigned short> f(f_view);
     vecmem::device_vector<unsigned int> cell_links_device(cell_links);
 
     /*
@@ -131,7 +131,7 @@ inline void aggregate_cluster2(
      */
     scalar totalWeight = 0.;
     point2 mean{0., 0.}, var{0., 0.};
-    const unsigned int mod_link = cellsSoA_device.module_link[cid + start];
+    auto mod_link = arg_reduce[cid].module_link;
     const cell_module this_module = modules.at(mod_link);
     const unsigned short partition_size = end - start;
 
@@ -139,27 +139,27 @@ inline void aggregate_cluster2(
 
     for (unsigned short j = cid; j < partition_size; j++) {
 
-        assert(j < f.size());
+       // assert(j < f.size());
 
-        const unsigned int pos = j + start;
+        const unsigned int pos = j + start ;
         /*
          * Terminate the process earlier if we have reached a cell sufficiently
          * in a different module.
          */
-        if (cellsSoA_device.module_link[pos] != mod_link) {
+        if (arg_reduce[j].module_link != mod_link) {
             break;
         }
 
-        const unsigned int this_cell_ch0  = cellsSoA_device.channel0[pos];
-        const unsigned int this_cell_ch1  = cellsSoA_device.channel1[pos];
-        const scalar this_cell_activation  = cellsSoA_device.activation[pos];
+        const unsigned int this_cell_ch0  = arg_reduce[j].channel0;
+        const unsigned int this_cell_ch1  = arg_reduce[j].channel1;
+        const scalar this_cell_activation  = arg_reduce[j].activation;
         
         /*
          * If the value of this cell is equal to our, that means it
          * is part of our cluster. In that case, we take its values
          * for position and add them to our accumulators.
          */
-        if (f[j] == cid) {
+        if (arg_reduce[j].id_cluster_f == cid) {
 
             if (this_cell_ch1 > maxChannel1) {
                 maxChannel1 = this_cell_ch1;

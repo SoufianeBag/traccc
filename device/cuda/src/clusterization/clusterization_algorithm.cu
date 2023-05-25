@@ -53,7 +53,7 @@ namespace kernels {
 /// @param[in] adjv     Vector of adjacent cells
 /// @param[in] tid      The thread index
 ///
-__device__ void fast_sv_1(index_t* f, index_t* gf,
+__device__ void fast_sv_1(cluster* arg_reduce,
                           unsigned char adjc[MAX_CELLS_PER_THREAD],
                           index_t adjv[MAX_CELLS_PER_THREAD][8], index_t tid,
                           const index_t blckDim) {
@@ -83,11 +83,11 @@ __device__ void fast_sv_1(index_t* f, index_t* gf,
 
             __builtin_assume(adjc[tst] <= 8);
             for (unsigned char k = 0; k < adjc[tst]; ++k) {
-                index_t q = gf[adjv[tst][k]];
+                index_t q = arg_reduce[adjv[tst][k]].id_cluster_gf;
 
-                if (gf[cid] > q) {
-                    f[f[cid]] = q;
-                    f[cid] = q;
+                if (arg_reduce[cid].id_cluster_gf > q) {
+                    arg_reduce[arg_reduce[cid].id_cluster_f].id_cluster_f = q;
+                    arg_reduce[cid].id_cluster_f = q;
                 }
             }
         }
@@ -106,8 +106,8 @@ __device__ void fast_sv_1(index_t* f, index_t* gf,
              * allows us to look at any shortcuts in the cluster IDs that we
              * can merge without adjacency information.
              */
-            if (f[cid] > gf[cid]) {
-                f[cid] = gf[cid];
+            if (arg_reduce[cid].id_cluster_f > arg_reduce[cid].id_cluster_gf) {
+                arg_reduce[cid].id_cluster_f = arg_reduce[cid].id_cluster_gf;
             }
         }
 
@@ -123,8 +123,8 @@ __device__ void fast_sv_1(index_t* f, index_t* gf,
              * Update the array for the next generation, keeping track of any
              * changes we make.
              */
-            if (gf[cid] != f[f[cid]]) {
-                gf[cid] = f[f[cid]];
+            if (arg_reduce[cid].id_cluster_gf != arg_reduce[arg_reduce[cid].id_cluster_f].id_cluster_f) {
+                arg_reduce[cid].id_cluster_gf = arg_reduce[arg_reduce[cid].id_cluster_f].id_cluster_f;
                 gf_changed = true;
             }
         }
@@ -274,7 +274,7 @@ __global__ void ccl_kernel(
      * Run FastSV algorithm, which will update the father index to that of the
      * cell belonging to the same cluster with the lowest index.
      */
-    fast_sv_1(f, f_next, adjc, adjv, tid, blckDim);
+    //fast_sv_1(f, f_next, adjc, adjv, tid, blckDim);
 
     __syncthreads();
 
@@ -402,13 +402,13 @@ __global__ void ccl_kernel2(
     const index_t size = end - start;
     //printf("size %hu \n", size);
     assert(size <= max_cells_per_partition);
-    for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
-        //printf("blck %u th %u ch0 %u\n", blockIdx.x, tid, ch0[tst]);
+   /* for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
+        
         assert(cells_device[tst].c.channel0 == cellsSoA_device.channel0[tst]);
         assert(cells_device[tst].c.channel1 == cellsSoA_device.channel1[tst]);
         assert(cells_device[tst].c.activation == cellsSoA_device.activation[tst]);
         assert(cells_device[tst].c.module_link == cellsSoA_device.module_link[tst]);
-    } 
+    } */ 
     // Check if any work needs to be done
     if (tid >= size) {
         return;
@@ -420,10 +420,10 @@ __global__ void ccl_kernel2(
     // Vector of indices of the adjacent cells
     index_t adjv[MAX_CELLS_PER_THREAD][8];
 
-    extern __shared__ index_t shared_v[];
-    index_t* f = &shared_v[0];
-    index_t* f_next = &shared_v[max_cells_per_partition];
-    unsigned int* arg_reduce = (unsigned int*)&shared_v[2*max_cells_per_partition]; 
+    extern __shared__ cluster shared_w[];
+    //index_t* f = &shared_v[0];
+    //index_t* f_next = &shared_v[max_cells_per_partition];
+    cluster* arg_reduce = &shared_w[0]; 
     /*
      * The number of adjacent cells for each cell must start at zero, to
      * avoid uninitialized memory. adjv does not need to be zeroed, as
@@ -441,9 +441,10 @@ __global__ void ccl_kernel2(
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
      
      unsigned int pos = cid + start;
-     arg_reduce[tid*3 + tst*blckDim*3] = cellsSoA_device.channel0[pos] ; 
-     arg_reduce[tid*3 + tst*blckDim*3 +1] = cellsSoA_device.channel1[pos] ; 
-     arg_reduce[tid*3 + tst*blckDim*3 +2] = cellsSoA_device.module_link[pos] ; 
+     arg_reduce[cid].channel0 = cellsSoA_device.channel0[pos] ; 
+     arg_reduce[cid].channel1 = cellsSoA_device.channel1[pos] ; 
+     arg_reduce[cid].module_link = cellsSoA_device.module_link[pos] ; 
+     arg_reduce[cid].activation = cellsSoA_device.activation[pos];
 
      
     }
@@ -455,8 +456,8 @@ __global__ void ccl_kernel2(
         /*
          * Look for adjacent cells to the current one.
          */
-        unsigned int pos = tid*3 + tst*blckDim*3;
-        device::reduce_problem_cell2(arg_reduce, cid, pos, size, adjc[tst],
+        
+        device::reduce_problem_cell2(arg_reduce, cid, start, size, adjc[tst],
                                     adjv[tst]);
         
     }
@@ -476,8 +477,8 @@ __global__ void ccl_kernel2(
          * At the start, the values of f and f_next should be equal to the
          * ID of the cell.
          */
-        f[cid] = cid;
-        f_next[cid] = cid;
+        arg_reduce[cid].id_cluster_f = cid;
+        arg_reduce[cid].id_cluster_gf = cid;
     }
     /*
      * Now that the data has initialized, we synchronize again before we
@@ -488,14 +489,14 @@ __global__ void ccl_kernel2(
      * Run FastSV algorithm, which will update the father index to that of the
      * cell belonging to the same cluster with the lowest index.
      */
-    fast_sv_1(f, f_next, adjc, adjv, tid, blckDim);
+    fast_sv_1(arg_reduce, adjc, adjv, tid, blckDim);
     __syncthreads();
     /*
      * Count the number of clusters by checking how many cells have
      * themself assigned as a parent.
      */
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
-        if (f[cid] == cid) {
+        if (arg_reduce[cid].id_cluster_f == cid) {
             atomicAdd(&outi, 1);
         }
         //printf("f[cid] %u \n ", f[cid] );
@@ -523,16 +524,16 @@ __global__ void ccl_kernel2(
         outi = 0;
     }
     __syncthreads();
-    vecmem::data::vector_view<index_t> f_view(max_cells_per_partition, f);
+    //vecmem::data::vector_view<index_t> f_view(max_cells_per_partition, f);
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
-        if (f[cid] == cid) {
+        if (arg_reduce[cid].id_cluster_f == cid) {
             /*
              * If we are a cluster owner, atomically claim a position in the
              * output array which we can write to.
              */
             const unsigned int id = atomicAdd(&outi, 1);
             device::aggregate_cluster2(
-                cellsSoA_device, modules_device, f_view, start, end, cid,
+                 modules_device, arg_reduce , start, end, cid,
                 measurements_device[groupPos + id], cell_links, groupPos + id); 
         }
     }
@@ -671,7 +672,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
     // Launch ccl kernel. Each thread will handle a single cell.
     kernels::
         ccl_kernel2<<<num_partitions, threads_per_partition,
-                      8 * max_cells_per_partition * sizeof(index_t), stream>>>(
+                       max_cells_per_partition * sizeof(cluster), stream>>>(
             cells, modules, cellsSoA, max_cells_per_partition,
             m_target_cells_per_partition, measurements_buffer,
             *num_measurements_device, cell_links);

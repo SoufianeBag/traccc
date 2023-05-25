@@ -92,35 +92,34 @@ bool is_adjacent2(channel_id ac0, channel_id ac1, channel_id bc0,
 
 TRACCC_HOST_DEVICE
 inline void reduce_problem_cell2(
-    unsigned int* arg_reduce,
-    const unsigned short cid, const unsigned int pos, const unsigned int end, 
+    cluster* arg_reduce,
+    const unsigned short cid, const unsigned int start, const unsigned int size, 
     unsigned char& adjc, unsigned short adjv[8]) {
 
-    
-
+ 
     // Check if this code can benefit from changing to structs of arrays, as the
     // recurring accesses to cell data in global memory is slow right now.
-    const channel_id c0 = arg_reduce[pos];
-    const channel_id c1 = arg_reduce[pos + 1];
-    const unsigned int mod_id = arg_reduce[pos + 2];
-
+    const channel_id c0 = arg_reduce[cid].channel0;
+    const channel_id c1 = arg_reduce[cid].channel1;
+    const unsigned int mod_id = arg_reduce[cid].module_link;
+   
     /*
      * First, we traverse the cells backwards, starting from the current
      * cell and working back to the first, collecting adjacent cells
      * along the way.
      */
     
-    unsigned char i = 0; 
-    for (unsigned int j = pos - 3; j < pos; j=j-3) {
+   
+    for (unsigned int j = cid - 1; j <cid; --j) {
 
-        ++i;
+        
         /*
          * Since the data is sorted, we can assume that if we see a cell
          * sufficiently far away in both directions, it becomes
          * impossible for that cell to ever be adjacent to this one.
          * This is a small optimisation.
          */
-        if (arg_reduce[j + 1] + 1 < c1 || arg_reduce[j + 2] != mod_id) {
+        if (arg_reduce[j].channel1 + 1 < c1 || arg_reduce[j].module_link != mod_id) {
             break;
         }
 
@@ -128,8 +127,8 @@ inline void reduce_problem_cell2(
          * If the cell examined is adjacent to the current cell, save it
          * in the current cell's adjacency set.
          */
-        if (is_adjacent2(c0, c1, arg_reduce[j], arg_reduce[j +1])) {
-            adjv[adjc++] = cid - i ;
+        if (is_adjacent2(c0, c1, arg_reduce[j].channel0, arg_reduce[j].channel1)) {
+            adjv[adjc++] = j  ;
         }
     }
 
@@ -137,19 +136,19 @@ inline void reduce_problem_cell2(
      * Now we examine all the cells past the current one, using almost
      * the same logic as in the backwards pass.
      */
-     i = 0;
-    for (unsigned int j = pos + 3; j < end ; j=j+3) {
-        ++i;
+    
+    for (unsigned int j = cid + 1; j < size; ++j) {
+        
         /*
          * Note that this check now looks in the opposite direction! An
          * important difference.
          */
-        if (arg_reduce[j +1] > c1 + 1 || arg_reduce[j+2] != mod_id) {
+        if (arg_reduce[j].channel1 > c1 + 1 || arg_reduce[j].module_link != mod_id) {
             break;
         }
 
-        if (is_adjacent2(c0, c1, arg_reduce[j], arg_reduce[j +1])) {
-            adjv[adjc++] = cid + i ;
+        if (is_adjacent2(c0, c1, arg_reduce[j].channel0, arg_reduce[j].channel1)) {
+            adjv[adjc++] = j ;
         }
     }
 }
