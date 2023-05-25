@@ -29,8 +29,8 @@ namespace {
 /// max_cells_per_partition, so we only need a short.
 using index_t = unsigned short;
 
-static constexpr int TARGET_CELLS_PER_THREAD = 8;
-static constexpr int MAX_CELLS_PER_THREAD = 12;
+static constexpr int TARGET_CELLS_PER_THREAD = 1;
+static constexpr int MAX_CELLS_PER_THREAD = 2;
 }  // namespace
 
 namespace kernels {
@@ -419,6 +419,11 @@ __global__ void ccl_kernel2(
         measurements_view);
     // Vector of indices of the adjacent cells
     index_t adjv[MAX_CELLS_PER_THREAD][8];
+
+    extern __shared__ index_t shared_v[];
+    index_t* f = &shared_v[0];
+    index_t* f_next = &shared_v[max_cells_per_partition];
+    unsigned int* arg_reduce = (unsigned int*)&shared_v[2*max_cells_per_partition]; 
     /*
      * The number of adjacent cells for each cell must start at zero, to
      * avoid uninitialized memory. adjv does not need to be zeroed, as
@@ -431,12 +436,27 @@ __global__ void ccl_kernel2(
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         adjc[tst] = 0;
     }
+    /// tiling 
+    #pragma unroll
+    for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
+     
+     unsigned int pos = cid + start;
+     arg_reduce[tid*3 + tst*blckDim*3] = cellsSoA_device.channel0[pos] ; 
+     arg_reduce[tid*3 + tst*blckDim*3 +1] = cellsSoA_device.channel1[pos] ; 
+     arg_reduce[tid*3 + tst*blckDim*3 +2] = cellsSoA_device.module_link[pos] ; 
+
+     
+    }
+
+
+
 #pragma unroll
     for (index_t tst = 0, cid; (cid = tst * blckDim + tid) < size; ++tst) {
         /*
          * Look for adjacent cells to the current one.
          */
-        device::reduce_problem_cell2(cellsSoA_device, cid, start, end, adjc[tst],
+        unsigned int pos = tid*3 + tst*blckDim*3;
+        device::reduce_problem_cell2(arg_reduce, cid, pos, size, adjc[tst],
                                     adjv[tst]);
         
     }
@@ -448,9 +468,7 @@ __global__ void ccl_kernel2(
      * shared memory is limited. These could always be moved to global memory,
      * but the algorithm would be decidedly slower in that case.
      */
-    extern __shared__ index_t shared_v[];
-    index_t* f = &shared_v[0];
-    index_t* f_next = &shared_v[max_cells_per_partition];
+    
 #pragma unroll
     for (index_t tst = 0; tst < MAX_CELLS_PER_THREAD; ++tst) {
         const index_t cid = tst * blckDim + tid;
@@ -653,7 +671,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
     // Launch ccl kernel. Each thread will handle a single cell.
     kernels::
         ccl_kernel2<<<num_partitions, threads_per_partition,
-                      2 * max_cells_per_partition * sizeof(index_t), stream>>>(
+                      8 * max_cells_per_partition * sizeof(index_t), stream>>>(
             cells, modules, cellsSoA, max_cells_per_partition,
             m_target_cells_per_partition, measurements_buffer,
             *num_measurements_device, cell_links);
