@@ -92,6 +92,7 @@ bool is_adjacent2(channel_id ac0, channel_id ac1, channel_id bc0,
 
 TRACCC_HOST_DEVICE
 inline void reduce_problem_cell2(
+    const CellsRefDevice& cellsSoA_device,
     cluster* arg_reduce,
     const unsigned short cid, const unsigned int start, const unsigned int size, 
     unsigned char& adjc, unsigned short adjv[8]) {
@@ -110,7 +111,7 @@ inline void reduce_problem_cell2(
      */
     
    
-    for (unsigned int j = cid - 1; j <cid; --j) {
+    for (unsigned int j = cid - 1; j <  cid; --j) {
 
         
         /*
@@ -119,7 +120,7 @@ inline void reduce_problem_cell2(
          * impossible for that cell to ever be adjacent to this one.
          * This is a small optimisation.
          */
-        if (arg_reduce[j].channel1 + 1 < c1 || arg_reduce[j].module_link != mod_id) {
+        if (cellsSoA_device.channel1[j + start] + 1 < c1 || cellsSoA_device.module_link[j + start] != mod_id) {
             break;
         }
 
@@ -127,7 +128,7 @@ inline void reduce_problem_cell2(
          * If the cell examined is adjacent to the current cell, save it
          * in the current cell's adjacency set.
          */
-        if (is_adjacent2(c0, c1, arg_reduce[j].channel0, arg_reduce[j].channel1)) {
+        if (is_adjacent2(c0, c1, cellsSoA_device.channel0[j + start], cellsSoA_device.channel1[j + start])) {
             adjv[adjc++] = j  ;
         }
     }
@@ -143,9 +144,10 @@ inline void reduce_problem_cell2(
          * Note that this check now looks in the opposite direction! An
          * important difference.
          */
-        if (arg_reduce[j].channel1 > c1 + 1 || arg_reduce[j].module_link != mod_id) {
+       if (arg_reduce[j].channel1 > c1 + 1 || arg_reduce[j].module_link != mod_id) {
             break;
         }
+
 
         if (is_adjacent2(c0, c1, arg_reduce[j].channel0, arg_reduce[j].channel1)) {
             adjv[adjc++] = j ;

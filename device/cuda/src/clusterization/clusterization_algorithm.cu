@@ -446,7 +446,6 @@ __global__ void ccl_kernel2(
      arg_reduce[cid].module_link = cellsSoA_device.module_link[pos] ; 
      arg_reduce[cid].activation = cellsSoA_device.activation[pos];
 
-     
     }
 
 
@@ -457,7 +456,7 @@ __global__ void ccl_kernel2(
          * Look for adjacent cells to the current one.
          */
         
-        device::reduce_problem_cell2(arg_reduce, cid, start, size, adjc[tst],
+        device::reduce_problem_cell2(cellsSoA_device ,arg_reduce, cid, start, size, adjc[tst],
                                     adjv[tst]);
         
     }
