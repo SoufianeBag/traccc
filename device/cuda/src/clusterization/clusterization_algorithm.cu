@@ -29,8 +29,8 @@ namespace {
 /// max_cells_per_partition, so we only need a short.
 using index_t = unsigned short;
 
-static constexpr int TARGET_CELLS_PER_THREAD = 1;
-static constexpr int MAX_CELLS_PER_THREAD = 2;
+static constexpr int TARGET_CELLS_PER_THREAD = 8;
+static constexpr int MAX_CELLS_PER_THREAD = 12;
 }  // namespace
 
 namespace kernels {
@@ -53,6 +53,16 @@ namespace kernels {
 /// @param[in] adjv     Vector of adjacent cells
 /// @param[in] tid      The thread index
 ///
+
+__device__ int warpReduceMin(int val)
+{
+    for (int offset = warpSize / 2; offset > 0; offset /= 2) {
+        val = min(val, __shfl_down_sync(0xffffffff, val, offset));
+       // __syncwarp();
+    }
+    return val;
+}
+
 __device__ void fast_sv_1(cluster* arg_reduce,
                           unsigned char adjc[MAX_CELLS_PER_THREAD],
                           index_t adjv[MAX_CELLS_PER_THREAD][8], index_t tid,
@@ -352,7 +362,7 @@ __global__ void ccl_kernel2(
 
     const traccc::CellsRefDevice cellsSoA_device(cellsSoA);
     const unsigned int num_cells = cells_device.size();
-    __shared__ unsigned int start, end;
+    __shared__ unsigned int start, end , start1;
     /*
      * This variable will be used to write to the output later.
      */
@@ -369,7 +379,9 @@ __global__ void ccl_kernel2(
          * Initialize shared variables.
          */
         start = blockIdx.x * target_cells_per_partition;
+        start1 = blockIdx.x * target_cells_per_partition;
         assert(start < num_cells);
+        assert(start1 < num_cells);
         end = std::min(num_cells, start + target_cells_per_partition);
         outi = 0;
         /*
@@ -398,7 +410,65 @@ __global__ void ccl_kernel2(
             ++end;
         }
     }
-    __syncthreads();
+    __syncthreads();  
+
+    unsigned int warpId = tid / warpSize;
+    bool xyz = false; 
+    
+    if (warpId == 0)  {
+        unsigned int  cell = 9999;
+        unsigned int warp_min = 9999 ; 
+        unsigned int iter = 0;
+        unsigned int cell_id;
+        while (warp_min == 9999 && iter < 50 ) {
+            cell_id = iter * warpSize + tid;  
+            if ( start1 == 0 ) break;  /// no diverges because all threads of blocs 0 will break 
+            if ( cellsSoA_device.module_link[start1 + cell_id - 1] !=
+                cellsSoA_device.module_link[start1 + cell_id] ||
+                cellsSoA_device.channel1[start1 + cell_id] >
+                cellsSoA_device.channel1[start1 + cell_id - 1] + 1)  {
+                cell = cell_id;
+            }
+
+            warp_min = warpReduceMin(cell);
+            ++iter ;
+            //printf("blockIdx.x*blockDim.x + tid : %u iter : %u \n",blockIdx.x*blockDim.x + tid , iter);
+        }
+        if (tid == 0 && start1 != 0 ) { 
+            start1 = warp_min + start1;
+            //printf(" start : %u  start1 : %u  start1 - warp_min : %u \n", start , start1 , start1 - warp_min);
+        }
+    } 
+    xyz = true; 
+    /*if (warpId == 1)  {
+
+    unsigned int short cell = 9999;
+    int warp_min = 9999 ; 
+    unsigned short iter = 0;
+
+    while (warp_min == 9999 && iter<16) {
+        
+    const index_t cell_id = iter * 32 + tid - 32;
+        
+        if ( end < num_cells && cellsSoA_device.module_link[end + cell_id - 1] !=
+                   cellsSoA_device.module_link[end + cell_id] ||
+                   cellsSoA_device.channel1[end + cell_id] >
+                   cellsSoA_device.channel1[end + cell_id - 1] + 1 ) {  // cells_device[end + cell_id].c.channel1 >cells_device[end + cell_id - 1].c.channel1 + 1 : so we garanty that there is no cell in the edge
+                    cell = cell_id;
+                    } 
+        __syncwarp();     
+        warp_min = warpReduceMin(cell);
+        iter += 1;
+    }
+     if (tid == 32) {
+        end += warp_min;
+        printf(" start : %u  start1 : %u  start1 - warp_min : %u \n", end , end1 , end1 - warp_min);
+     }
+    } */
+
+   __syncthreads(); 
+   if (blockIdx.x*blockDim.x + tid == cells_view.size() - 2048 ) printf("blockIdx.x*blockDim.x + tid %u \n", blockIdx.x*blockDim.x + tid);
+    
     const index_t size = end - start;
     //printf("size %hu \n", size);
     assert(size <= max_cells_per_partition);
