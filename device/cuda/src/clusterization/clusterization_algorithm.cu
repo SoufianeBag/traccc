@@ -29,8 +29,8 @@ namespace {
 /// max_cells_per_partition, so we only need a short.
 using index_t = unsigned short;
 
-static constexpr int TARGET_CELLS_PER_THREAD = 8;
-static constexpr int MAX_CELLS_PER_THREAD = 12;
+static constexpr int TARGET_CELLS_PER_THREAD = 1;
+static constexpr int MAX_CELLS_PER_THREAD = 2;
 }  // namespace
 
 namespace kernels {
@@ -57,12 +57,11 @@ namespace kernels {
 __device__ int warpReduceMin(int val)
 {
     for (int offset = warpSize / 2; offset > 0; offset /= 2) {
-        val = min(val, __shfl_down_sync(0xffffffff, val, offset));
-       // __syncwarp();
+        int compareVal = __shfl_xor_sync(0xffffffff, val, offset);
+        val = min(val, compareVal);
     }
     return val;
 }
-
 __device__ void fast_sv_1(cluster* arg_reduce,
                           unsigned char adjc[MAX_CELLS_PER_THREAD],
                           index_t adjv[MAX_CELLS_PER_THREAD][8], index_t tid,
@@ -362,7 +361,7 @@ __global__ void ccl_kernel2(
 
     const traccc::CellsRefDevice cellsSoA_device(cellsSoA);
     const unsigned int num_cells = cells_device.size();
-    __shared__ unsigned int start, end , start1;
+    __shared__ unsigned int start, end ;
     /*
      * This variable will be used to write to the output later.
      */
@@ -379,54 +378,53 @@ __global__ void ccl_kernel2(
          * Initialize shared variables.
          */
         start = blockIdx.x * target_cells_per_partition;
-        start1 = blockIdx.x * target_cells_per_partition;
         assert(start < num_cells);
-        assert(start1 < num_cells);
         end = std::min(num_cells, start + target_cells_per_partition);
+        //end1 = std::min(num_cells, start + target_cells_per_partition);
         outi = 0;
+
         /*
          * Next, shift the starting point to a position further in the array;
          * the purpose of this is to ensure that we are not operating on any
          * cells that have been claimed by the previous block (if any).
          */
-        while (start != 0 &&
+        /*while (start != 0 &&
                cellsSoA_device.module_link[start - 1] ==
                    cellsSoA_device.module_link[start] &&
                cellsSoA_device.channel1[start] <=
                    cellsSoA_device.channel1[start - 1] + 1) {
             ++start;
-        }
+        }*/
 
         /*
          * Then, claim as many cells as we need past the naive end of the
          * current block to ensure that we do not end our partition on a cell
          * that is not a possible boundary!
          */
-        while (end < num_cells &&
+        /*while (end < num_cells &&
                cellsSoA_device.module_link[end - 1] ==
                    cellsSoA_device.module_link[end] &&
                cellsSoA_device.channel1[end] <=
                    cellsSoA_device.channel1[end - 1] + 1) {
             ++end;
-        }
+        }*/
     }
     __syncthreads();  
 
-    unsigned int warpId = tid / warpSize;
-    bool xyz = false; 
-    
+    unsigned short warpId = tid / warpSize;
+
     if (warpId == 0)  {
-        unsigned int  cell = 9999;
-        unsigned int warp_min = 9999 ; 
-        unsigned int iter = 0;
-        unsigned int cell_id;
-        while (warp_min == 9999 && iter < 50 ) {
+        unsigned short cell = 999;
+        unsigned short warp_min = 999 ; 
+        unsigned short iter = 0;
+        unsigned short cell_id;
+        while (warp_min == 999 && iter < 50 ) {
             cell_id = iter * warpSize + tid;  
-            if ( start1 == 0 ) break;  /// no diverges because all threads of blocs 0 will break 
-            if ( cellsSoA_device.module_link[start1 + cell_id - 1] !=
-                cellsSoA_device.module_link[start1 + cell_id] ||
-                cellsSoA_device.channel1[start1 + cell_id] >
-                cellsSoA_device.channel1[start1 + cell_id - 1] + 1)  {
+            if ( start == 0 ) break;  /// no diverges because all threads of blocs 0 will break 
+            if ( cellsSoA_device.module_link[start + cell_id - 1] !=
+                cellsSoA_device.module_link[start + cell_id] ||
+                cellsSoA_device.channel1[start + cell_id] >
+                cellsSoA_device.channel1[start + cell_id - 1] + 1)  {
                 cell = cell_id;
             }
 
@@ -434,41 +432,36 @@ __global__ void ccl_kernel2(
             ++iter ;
             //printf("blockIdx.x*blockDim.x + tid : %u iter : %u \n",blockIdx.x*blockDim.x + tid , iter);
         }
-        if (tid == 0 && start1 != 0 ) { 
-            start1 = warp_min + start1;
+        if (tid == 0 && start != 0 ) { 
+            start = warp_min + start;
             //printf(" start : %u  start1 : %u  start1 - warp_min : %u \n", start , start1 , start1 - warp_min);
         }
     } 
-    xyz = true; 
-    /*if (warpId == 1)  {
+    if (warpId == 1)  {
 
-    unsigned int short cell = 9999;
-    int warp_min = 9999 ; 
-    unsigned short iter = 0;
-
-    while (warp_min == 9999 && iter<16) {
-        
-    const index_t cell_id = iter * 32 + tid - 32;
-        
-        if ( end < num_cells && cellsSoA_device.module_link[end + cell_id - 1] !=
-                   cellsSoA_device.module_link[end + cell_id] ||
-                   cellsSoA_device.channel1[end + cell_id] >
-                   cellsSoA_device.channel1[end + cell_id - 1] + 1 ) {  // cells_device[end + cell_id].c.channel1 >cells_device[end + cell_id - 1].c.channel1 + 1 : so we garanty that there is no cell in the edge
-                    cell = cell_id;
-                    } 
-        __syncwarp();     
-        warp_min = warpReduceMin(cell);
-        iter += 1;
+        unsigned short cell = 999;
+        unsigned short warp_min = 999 ; 
+        unsigned short iter = 0;
+        unsigned short cell_id;
+        while (warp_min == 999 && iter<50) {
+            cell_id = iter * warpSize + tid - warpSize;  
+            if ( end < num_cells && (cellsSoA_device.module_link[end + cell_id - 1] !=
+                    cellsSoA_device.module_link[end + cell_id] ||
+                    cellsSoA_device.channel1[end + cell_id] >
+                    cellsSoA_device.channel1[end + cell_id - 1] + 1 )) {  
+                        cell = cell_id;
+                        } 
+            //__syncwarp();     
+            warp_min = warpReduceMin(cell);
+            ++iter;
     }
-     if (tid == 32) {
-        end += warp_min;
-        printf(" start : %u  start1 : %u  start1 - warp_min : %u \n", end , end1 , end1 - warp_min);
+     if (tid == 33 && end < num_cells) {
+        end = warp_min + end;
+        //printf(" end : %u  end1 : %u  end1 - warp_min : %u \n", end , end1 , end1 - warp_min);
      }
-    } */
+    } 
 
    __syncthreads(); 
-   if (blockIdx.x*blockDim.x + tid == cells_view.size() - 2048 ) printf("blockIdx.x*blockDim.x + tid %u \n", blockIdx.x*blockDim.x + tid);
-    
     const index_t size = end - start;
     //printf("size %hu \n", size);
     assert(size <= max_cells_per_partition);
