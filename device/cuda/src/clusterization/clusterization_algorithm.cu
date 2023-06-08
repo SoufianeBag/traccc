@@ -53,6 +53,15 @@ namespace kernels {
 /// @param[in] adjv     Vector of adjacent cells
 /// @param[in] tid      The thread index
 ///
+
+__device__ int warpReduceMin(int val)
+{
+    for (int offset = warpSize / 2; offset > 0; offset /= 2) {
+        int compareVal = __shfl_xor_sync(0xffffffff, val, offset);
+        val = min(val, compareVal);
+    }
+    return val;
+}
 __device__ void fast_sv_1(index_t* f, index_t* gf,
                           unsigned char adjc[MAX_CELLS_PER_THREAD],
                           index_t adjv[MAX_CELLS_PER_THREAD][8], index_t tid,
@@ -377,38 +386,91 @@ __global__ void ccl_kernel2(
          * the purpose of this is to ensure that we are not operating on any
          * cells that have been claimed by the previous block (if any).
          */
-        while (start != 0 &&
+        /*while (start != 0 &&
                cellsSoA_device.module_link[start - 1] ==
                    cellsSoA_device.module_link[start] &&
                cellsSoA_device.channel1[start] <=
                    cellsSoA_device.channel1[start - 1] + 1) {
             ++start;
-        }
+        }*/
 
         /*
          * Then, claim as many cells as we need past the naive end of the
          * current block to ensure that we do not end our partition on a cell
          * that is not a possible boundary!
          */
-        while (end < num_cells &&
+        /*while (end < num_cells &&
                cellsSoA_device.module_link[end - 1] ==
                    cellsSoA_device.module_link[end] &&
                cellsSoA_device.channel1[end] <=
                    cellsSoA_device.channel1[end - 1] + 1) {
             ++end;
-        }
+        }*/
     }
     __syncthreads();
+
+    unsigned short warpId = tid / warpSize;
+
+    if (warpId == 0)  {
+        unsigned short cell = 999;
+        unsigned short warp_min = 999 ; 
+        unsigned short iter = 0;
+        unsigned short cell_id;
+        while (warp_min == 999 && iter < 50 ) {
+            cell_id = iter * warpSize + tid;  
+            if ( start == 0 ) break;  /// no diverges because all threads of blocs 0 will break 
+            if ( cellsSoA_device.module_link[start + cell_id - 1] !=
+                cellsSoA_device.module_link[start + cell_id] ||
+                cellsSoA_device.channel1[start + cell_id] >
+                cellsSoA_device.channel1[start + cell_id - 1] + 1)  {
+                cell = cell_id;
+            }
+
+            warp_min = warpReduceMin(cell);
+            ++iter ;
+            //printf("blockIdx.x*blockDim.x + tid : %u iter : %u \n",blockIdx.x*blockDim.x + tid , iter);
+        }
+        if (tid == 0 && start != 0 ) { 
+            start = warp_min + start;
+            //printf(" start : %u  start1 : %u  start1 - warp_min : %u \n", start , start1 , start1 - warp_min);
+        }
+    } 
+    if (warpId == 1)  {
+
+        unsigned short cell = 999;
+        unsigned short warp_min = 999 ; 
+        unsigned short iter = 0;
+        unsigned short cell_id;
+        while (warp_min == 999 && iter<50) {
+            cell_id = iter * warpSize + tid - warpSize;  
+            if ( end < num_cells && (cellsSoA_device.module_link[end + cell_id - 1] !=
+                    cellsSoA_device.module_link[end + cell_id] ||
+                    cellsSoA_device.channel1[end + cell_id] >
+                    cellsSoA_device.channel1[end + cell_id - 1] + 1 )) {  
+                        cell = cell_id;
+                        } 
+            //__syncwarp();     
+            warp_min = warpReduceMin(cell);
+            ++iter;
+    }
+     if (tid == 33 && end < num_cells) {
+        end = warp_min + end;
+        //printf(" end : %u  end1 : %u  end1 - warp_min : %u \n", end , end1 , end1 - warp_min);
+     }
+    } 
+
+   __syncthreads(); 
+
     const index_t size = end - start;
     //printf("size %hu \n", size);
     assert(size <= max_cells_per_partition);
-    for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
+    /*for (unsigned int tst = start + tid; tst < end; tst += blckDim) {
         //printf("blck %u th %u ch0 %u\n", blockIdx.x, tid, ch0[tst]);
         assert(cells_device[tst].c.channel0 == cellsSoA_device.channel0[tst]);
         assert(cells_device[tst].c.channel1 == cellsSoA_device.channel1[tst]);
         assert(cells_device[tst].c.activation == cellsSoA_device.activation[tst]);
         assert(cells_device[tst].c.module_link == cellsSoA_device.module_link[tst]);
-    } 
+    }*/ 
     // Check if any work needs to be done
     if (tid >= size) {
         return;
