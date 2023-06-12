@@ -29,8 +29,8 @@ namespace {
 /// max_cells_per_partition, so we only need a short.
 using index_t = unsigned short;
 
-static constexpr int TARGET_CELLS_PER_THREAD = 8;
-static constexpr int MAX_CELLS_PER_THREAD = 12;
+static constexpr int TARGET_CELLS_PER_THREAD = 1;
+static constexpr int MAX_CELLS_PER_THREAD = 2;
 }  // namespace
 
 namespace kernels {
