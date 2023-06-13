@@ -32,6 +32,15 @@ namespace traccc::device {
 /// iteration.
 /// @param[in] barrier  A generic object for block-wide synchronisation
 ///
+__device__ int warpReduceMin(int val)
+{
+    for (int offset = warpSize / 2; offset > 0; offset /= 2) {
+        int compareVal = __shfl_xor_sync(0xffffffff, val, offset);
+        val = min(val, compareVal);
+    }
+    return val;
+}
+
 template <typename barrier_t>
 TRACCC_DEVICE void fast_sv_1(index_t* f, index_t* gf,
                              unsigned char adjc[MAX_CELLS_PER_THREAD],
@@ -360,29 +369,81 @@ TRACCC_DEVICE inline void ccl_kernel2(
          * on any cells that have been claimed by the previous block (if
          * any).
          */
-        while (start != 0 &&
+        /*while (start != 0 &&
                cells_device[start - 1].module_link ==
                    cells_device[start].module_link &&
                cells_device[start].channel1 <=
                    cells_device[start - 1].channel1 + 1) {
             ++start;
-        }
+        }*/
 
         /*
          * Then, claim as many cells as we need past the naive end of the
          * current block to ensure that we do not end our partition on a
          * cell that is not a possible boundary!
          */
-        while (end < num_cells &&
+        /*while (end < num_cells &&
                cells_device[end - 1].module_link ==
                    cells_device[end].module_link &&
                cells_device[end].channel1 <=
                    cells_device[end - 1].channel1 + 1) {
             ++end;
-        }
+        }*/
         partition_start = start;
-        partition_end = end;
+        partition_end = end; 
     }
+
+    barrier.blockBarrier();
+
+    unsigned short warpId = threadId / warpSize;
+
+    if (warpId == 0)  {
+        unsigned short cell = 999;
+        unsigned short warp_min = 999 ; 
+        unsigned short iter = 0;
+        unsigned short cell_id;
+        while (warp_min == 999 && iter < 50 ) {
+            cell_id = iter * warpSize + threadId;  
+            if ( partition_start == 0 ) break;  /// no diverges because all threads of blocs 0 will break 
+            if ( cells_device[partition_start + cell_id - 1].module_link !=
+                cells_device[partition_start + cell_id].module_link ||
+                cells_device[partition_start + cell_id].channel1 >
+                cells_device[partition_start + cell_id - 1].channel1 + 1)  {
+                cell = cell_id;
+            }
+
+            warp_min = warpReduceMin(cell);
+            ++iter ;
+            //printf("blockIdx.x*blockDim.x + tid : %u iter : %u \n",blockIdx.x*blockDim.x + tid , iter);
+        }
+        if (threadId == 0 && partition_start != 0 ) { 
+            partition_start = warp_min + partition_start;
+            //printf(" start : %u  start1 : %u  start1 - warp_min : %u \n", start , start1 , start1 - warp_min);
+        }
+    } 
+    if (warpId == 1)  {
+
+        unsigned short cell = 999;
+        unsigned short warp_min = 999 ; 
+        unsigned short iter = 0;
+        unsigned short cell_id;
+        while (warp_min == 999 && iter<50) {
+            cell_id = iter * warpSize + threadId - warpSize;  
+            if ( partition_end < num_cells && (cells_device[partition_end + cell_id - 1].module_link !=
+                    cells_device[partition_end + cell_id].module_link ||
+                    cells_device[partition_end + cell_id].channel1 >
+                    cells_device[partition_end + cell_id - 1].channel1 + 1 )) {  
+                        cell = cell_id;
+                        } 
+            //__syncwarp();     
+            warp_min = warpReduceMin(cell);
+            ++iter;
+    }
+     if (threadId == 33 && partition_end < num_cells) {
+        partition_end = warp_min + partition_end;
+        //printf(" end : %u  end1 : %u  end1 - warp_min : %u \n", end , end1 , end1 - warp_min);
+     }
+    } 
 
     barrier.blockBarrier();
 

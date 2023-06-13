@@ -239,6 +239,7 @@ clusterization_algorithm2::output_type clusterization_algorithm2::operator()(
             /**num_measurements_device,*/ cell_links);
 
     CUDA_ERROR_CHECK(cudaGetLastError());
+
     /*vecmem::unique_alloc_ptr<unsigned int> num_measurements_host =
         vecmem::make_unique_alloc<unsigned int>(*(m_mr.host));
     CUDA_ERROR_CHECK(cudaMemcpyAsync(
