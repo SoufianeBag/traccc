@@ -65,6 +65,20 @@ TRACCC_DEVICE inline void ccl_kernel(
     unsigned int& measurement_count,
     vecmem::data::vector_view<unsigned int> cell_links);
 
+
+template <typename barrier_t>
+TRACCC_DEVICE inline void ccl_kernel2(
+    const index_t threadId, const index_t blckDim, const unsigned int blockId,
+    const cell_collection_types::const_view cells_view,
+    const cell_module_collection_types::const_view modules_view,
+    const index_t max_cells_per_partition,
+    const index_t target_cells_per_partition, unsigned int& partition_start,
+    unsigned int& partition_end, unsigned int& outi, index_t* f, index_t* gf,
+    barrier_t& barrier,
+    /*alt_measurement_collection_types::view measurements_view,
+    unsigned int& measurement_count,*/
+    traccc::spacepoint_container &spacepoints_container,
+    vecmem::data::vector_view<unsigned int> cell_links);
 }  // namespace traccc::device
 
 // Include the implementation.
